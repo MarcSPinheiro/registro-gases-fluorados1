@@ -38,15 +38,25 @@
         header {
             background-color: var(--primary-color);
             color: white;
-            padding: 15px 0;
-            text-align: center;
+            padding: 12px 20px;
             border-radius: 5px 5px 0 0;
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .header-text {
+            flex-grow: 1;
         }
         
         h1 {
-            font-size: 1.8rem;
-            margin-bottom: 5px;
+            font-size: 1.6rem;
+            margin-bottom: 3px;
+        }
+        
+        .header-text p {
+            font-size: 0.85rem;
+            opacity: 0.9;
         }
         
         h2 {
@@ -67,26 +77,36 @@
         
         .stats-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
             margin-bottom: 20px;
         }
         
         .stat-card {
             background: linear-gradient(135deg, var(--secondary-color), #2980b9);
             color: white;
-            padding: 20px;
+            padding: 15px;
             border-radius: 8px;
             text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            min-height: 90px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         
         .stat-card h3 {
-            font-size: 2rem;
+            font-size: 1.6rem;
             margin-bottom: 5px;
         }
         
         .stat-card p {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             opacity: 0.9;
         }
         
@@ -151,8 +171,10 @@
         }
         
         .btn {
-            display: inline-block;
-            padding: 8px 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 10px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
@@ -160,6 +182,12 @@
             font-weight: 600;
             transition: background-color 0.3s;
             text-decoration: none;
+            min-width: 32px;
+            height: 32px;
+        }
+        
+        .btn-icon {
+            font-size: 1rem;
         }
         
         .btn-primary {
@@ -201,12 +229,16 @@
         .action-buttons {
             display: flex;
             gap: 5px;
+            flex-wrap: nowrap; /* Alterado para nowrap para manter em linha */
+            justify-content: flex-start;
+            align-items: center;
         }
         
         .nav-tabs {
             display: flex;
             border-bottom: 1px solid #ddd;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
         
         .nav-tab {
@@ -462,7 +494,61 @@
             font-weight: 600;
         }
         
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: 600;
+            z-index: 1100;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background-color: var(--success-color);
+        }
+        
+        .notification.error {
+            background-color: var(--accent-color);
+        }
+        
+        .notification.warning {
+            background-color: var(--warning-color);
+        }
+        
         @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                text-align: center;
+                padding: 15px;
+            }
+            
+            .stats-container {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                gap: 8px;
+            }
+            
+            .stat-card {
+                padding: 10px;
+                min-height: 80px;
+            }
+            
+            .stat-card h3 {
+                font-size: 1.4rem;
+            }
+            
+            .stat-card p {
+                font-size: 0.75rem;
+            }
+            
             .filters {
                 flex-direction: column;
             }
@@ -473,7 +559,9 @@
             }
             
             .action-buttons {
-                flex-direction: column;
+                flex-direction: row; /* Mantém em linha mesmo em mobile */
+                flex-wrap: wrap;
+                justify-content: center;
             }
             
             .compact-grid, .compact-row {
@@ -493,13 +581,32 @@
                 flex-direction: column;
             }
         }
+        
+        @media (max-width: 480px) {
+            .stats-container {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            h1 {
+                font-size: 1.4rem;
+            }
+            
+            .action-buttons {
+                flex-direction: row; /* Mantém em linha mesmo em mobile */
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Dashboard - Registo de Gases Fluorados</h1>
-            <p>Decreto-Lei n.º 145/2017, de 30 de novembro</p>
+            <!-- Logotipo removido conforme solicitado -->
+            <div class="header-text">
+                <h1>Dashboard - Registo de Gases Fluorados</h1>
+                <p>Decreto-Lei n.º 145/2017, de 30 de novembro</p>
+            </div>
         </header>
         
         <div class="nav-tabs">
@@ -526,10 +633,6 @@
                         <h3 id="registosValidados">0</h3>
                         <p>Registos Validados</p>
                     </div>
-                    <div class="stat-card">
-                        <h3 id="registosSetembro">0</h3>
-                        <p>Registos em Setembro 2025</p>
-                    </div>
                 </div>
                 
                 <h2>Registos Recentes</h2>
@@ -550,10 +653,6 @@
                         <option value="pendente">Pendente</option>
                         <option value="validado">Validado</option>
                         <option value="aprovado">Aprovado</option>
-                    </select>
-                    
-                    <select id="filterTecnico">
-                        <option value="">Todos os Técnicos</option>
                     </select>
                     
                     <input type="text" id="searchInput" placeholder="Pesquisar por cliente...">
@@ -905,6 +1004,29 @@
             </div>
         </div>
     </div>
+    
+    <!-- Modal para Eliminar Registo -->
+    <div id="eliminarRegistoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Eliminar Registo</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            
+            <div id="eliminarRegistoContent">
+                <p>Tem a certeza que pretende eliminar este registo?</p>
+                <p><strong>Esta ação não pode ser desfeita.</strong></p>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-danger" id="confirmarEliminacao">Confirmar Eliminação</button>
+                    <button class="btn">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificações -->
+    <div id="notification" class="notification"></div>
 
     <script>
         // Dados de exemplo para demonstração
@@ -965,6 +1087,7 @@
             // Modal buttons
             document.querySelector('#detalhesRegistoModal .close-modal').addEventListener('click', () => closeModal('detalhesRegistoModal'));
             document.querySelector('#validacaoModal .close-modal').addEventListener('click', () => closeModal('validacaoModal'));
+            document.querySelector('#eliminarRegistoModal .close-modal').addEventListener('click', () => closeModal('eliminarRegistoModal'));
             
             // Botões de ação do formulário
             document.querySelector('.btn-duplicate').addEventListener('click', duplicateForm);
@@ -973,6 +1096,10 @@
             // Botões de validação
             document.querySelector('#validacaoModal .btn-success').addEventListener('click', validarRegisto);
             document.querySelector('#validacaoModal .btn').addEventListener('click', () => closeModal('validacaoModal'));
+            
+            // Botões de eliminação
+            document.querySelector('#eliminarRegistoModal .btn').addEventListener('click', () => closeModal('eliminarRegistoModal'));
+            document.getElementById('confirmarEliminacao').addEventListener('click', eliminarRegisto);
             
             // Campos dinâmicos
             document.getElementById('brand').addEventListener('change', function() {
@@ -1116,7 +1243,7 @@
             if (entries.length > 1) {
                 button.parentElement.remove();
             } else {
-                alert('É necessário pelo menos um número de série.');
+                showNotification('É necessário pelo menos um número de série.', 'warning');
             }
         }
 
@@ -1148,7 +1275,7 @@
                 // Reconfigurar listeners
                 setupSerialNumberListeners();
                 
-                alert('Registo submetido e duplicado! Pode agora alterar os números de série para um novo registo.');
+                showNotification('Registo submetido e duplicado! Pode agora alterar os números de série para um novo registo.', 'success');
             }
         }
 
@@ -1213,7 +1340,7 @@
             if (brandSelect.value === 'outra' && !otherBrandInput.value) {
                 isValid = false;
                 otherBrandInput.style.borderColor = 'red';
-                alert('Por favor, especifique a marca do equipamento.');
+                showNotification('Por favor, especifique a marca do equipamento.', 'warning');
             } else {
                 otherBrandInput.style.borderColor = '#ddd';
             }
@@ -1229,12 +1356,12 @@
             });
             
             if (!interventionSelected) {
-                alert('Selecione pelo menos um tipo de intervenção');
+                showNotification('Selecione pelo menos um tipo de intervenção', 'warning');
                 isValid = false;
             }
             
             if (!isValid) {
-                alert('Por favor, preencha todos os campos obrigatórios.');
+                showNotification('Por favor, preencha todos os campos obrigatórios.', 'error');
             }
             
             return isValid;
@@ -1277,7 +1404,7 @@
             // Voltar para o dashboard
             openTab('dashboard');
             
-            alert('Registo submetido com sucesso!');
+            showNotification('Registo submetido com sucesso!', 'success');
         }
 
         // Atualizar registo existente
@@ -1302,7 +1429,7 @@
                 // Voltar para o dashboard
                 openTab('dashboard');
                 
-                alert('Registo atualizado com sucesso!');
+                showNotification('Registo atualizado com sucesso!', 'success');
             }
         }
 
@@ -1501,9 +1628,10 @@
                 
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                     ${registo.estado === 'pendente' ? 
-                      `<button class="btn btn-success" id="validarFromDetails">Validar</button>` : 
+                      `<button class="btn btn-success" id="validarFromDetails" title="Validar">✓</button>` : 
                       ''}
-                    <button class="btn btn-warning" id="editarFromDetails">Editar</button>
+                    <button class="btn btn-warning" id="editarFromDetails" title="Editar">✎</button>
+                    <button class="btn btn-danger" id="eliminarFromDetails" title="Eliminar">🗑</button>
                     <button class="btn" onclick="closeModal('detalhesRegistoModal')">Fechar</button>
                 </div>
             `;
@@ -1519,6 +1647,11 @@
                 editarRegisto(registo.id);
             });
             
+            document.getElementById('eliminarFromDetails')?.addEventListener('click', function() {
+                closeModal('detalhesRegistoModal');
+                abrirEliminacao(registo.id);
+            });
+            
             openModal('detalhesRegistoModal');
         }
 
@@ -1526,6 +1659,12 @@
         function abrirValidacao(id) {
             currentRegistoId = id;
             openModal('validacaoModal');
+        }
+
+        // Abrir modal de eliminação
+        function abrirEliminacao(id) {
+            currentRegistoId = id;
+            openModal('eliminarRegistoModal');
         }
 
         // Validar registo
@@ -1546,11 +1685,31 @@
                 renderRegistosTable();
                 renderRecentRegistos();
                 
-                alert('Registo validado com sucesso!');
+                showNotification('Registo validado com sucesso!', 'success');
             }
             
             closeModal('validacaoModal');
             document.getElementById('observacoesValidacao').value = '';
+            currentRegistoId = null;
+        }
+
+        // Eliminar registo
+        function eliminarRegisto() {
+            if (!currentRegistoId) return;
+            
+            const registoIndex = registos.findIndex(r => r.id === currentRegistoId);
+            if (registoIndex !== -1) {
+                registos.splice(registoIndex, 1);
+                
+                // Atualizar UI
+                updateStats();
+                renderRegistosTable();
+                renderRecentRegistos();
+                
+                showNotification('Registo eliminado com sucesso!', 'success');
+            }
+            
+            closeModal('eliminarRegistoModal');
             currentRegistoId = null;
         }
 
@@ -1568,12 +1727,10 @@
             const total = registos.length;
             const pendentes = registos.filter(r => r.estado === 'pendente').length;
             const validados = registos.filter(r => r.estado === 'validado').length;
-            const setembro = registos.filter(r => r.data.startsWith('2025-09')).length;
             
             document.getElementById('totalRegistos').textContent = total;
             document.getElementById('pendentesValidacao').textContent = pendentes;
             document.getElementById('registosValidados').textContent = validados;
-            document.getElementById('registosSetembro').textContent = setembro;
         }
 
         // Renderizar tabela de registos
@@ -1623,11 +1780,12 @@
                     <td>${registo.marca} ${registo.modelo}</td>
                     <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                     <td class="action-buttons">
-                        <button class="btn btn-primary ver-btn" data-id="${registo.id}">Ver</button>
+                        <button class="btn btn-primary ver-btn" data-id="${registo.id}" title="Ver detalhes">👁</button>
                         ${registo.estado === 'pendente' ? 
-                          `<button class="btn btn-success validar-btn" data-id="${registo.id}">Validar</button>` : 
+                          `<button class="btn btn-success validar-btn" data-id="${registo.id}" title="Validar">✓</button>` : 
                           ''}
-                        <button class="btn btn-warning editar-btn" data-id="${registo.id}">Editar</button>
+                        <button class="btn btn-warning editar-btn" data-id="${registo.id}" title="Editar">✎</button>
+                        <button class="btn btn-danger eliminar-btn" data-id="${registo.id}" title="Eliminar">🗑</button>
                     </td>
                 `;
                 
@@ -1653,6 +1811,13 @@
                 btn.addEventListener('click', function() {
                     const id = parseInt(this.getAttribute('data-id'));
                     editarRegisto(id);
+                });
+            });
+            
+            document.querySelectorAll('.eliminar-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    abrirEliminacao(id);
                 });
             });
             
@@ -1794,11 +1959,12 @@
                         <td>${registo.marca} ${registo.modelo}</td>
                         <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                         <td class="action-buttons">
-                            <button class="btn btn-primary recent-ver-btn" data-id="${registo.id}">Ver</button>
+                            <button class="btn btn-primary recent-ver-btn" data-id="${registo.id}" title="Ver detalhes">👁</button>
                             ${registo.estado === 'pendente' ? 
-                              `<button class="btn btn-success recent-validar-btn" data-id="${registo.id}">Validar</button>` : 
+                              `<button class="btn btn-success recent-validar-btn" data-id="${registo.id}" title="Validar">✓</button>` : 
                               ''}
-                            <button class="btn btn-warning recent-editar-btn" data-id="${registo.id}">Editar</button>
+                            <button class="btn btn-warning recent-editar-btn" data-id="${registo.id}" title="Editar">✎</button>
+                            <button class="btn btn-danger recent-eliminar-btn" data-id="${registo.id}" title="Eliminar">🗑</button>
                         </td>
                     </tr>
                 `;
@@ -1832,12 +1998,30 @@
                     editarRegisto(id);
                 });
             });
+            
+            document.querySelectorAll('.recent-eliminar-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    abrirEliminacao(id);
+                });
+            });
         }
 
         // Formatar data
         function formatDate(dateString) {
             const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
             return new Date(dateString).toLocaleDateString('pt-PT', options);
+        }
+
+        // Mostrar notificação
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
         }
     </script>
 </body>
