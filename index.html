@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Registo de Gases Fluorados</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="description" content="Sistema de registo de gases fluorados - Decreto-Lei n.º 145/2017">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Registo Gases Fluorados">
+    
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -524,6 +532,30 @@
             background-color: var(--warning-color);
         }
         
+        .install-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .install-btn:hover {
+            background: var(--dark-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+        }
+        
         @media (max-width: 768px) {
             header {
                 flex-direction: column;
@@ -579,6 +611,13 @@
             
             .button-group {
                 flex-direction: column;
+            }
+            
+            .install-btn {
+                bottom: 15px;
+                right: 15px;
+                padding: 10px 16px;
+                font-size: 0.8rem;
             }
         }
         
@@ -1024,6 +1063,9 @@
         </div>
     </div>
 
+    <!-- Botão de Instalação PWA -->
+    <button class="install-btn" id="installButton">📱 Instalar App</button>
+
     <!-- Notificações -->
     <div id="notification" class="notification"></div>
 
@@ -1095,7 +1137,90 @@
             updateStats();
             renderRegistosTable();
             renderRecentRegistos();
+            setupPWA();
         });
+
+        // ===== PWA FUNCTIONALITY =====
+        let deferredPrompt;
+
+        function setupPWA() {
+            // Service Worker Registration
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('./sw.js')
+                        .then(registration => {
+                            console.log('ServiceWorker registrado com sucesso: ', registration.scope);
+                            
+                            // Verifica se há uma nova versão disponível
+                            registration.addEventListener('updatefound', () => {
+                                const newWorker = registration.installing;
+                                console.log('Nova versão do Service Worker encontrada!');
+                                
+                                newWorker.addEventListener('statechange', () => {
+                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                        // Nova versão disponível
+                                        showNotification('Nova versão disponível! Recarregue a página.', 'warning');
+                                    }
+                                });
+                            });
+                        })
+                        .catch(error => {
+                            console.log('Falha no registro do ServiceWorker: ', error);
+                        });
+                });
+
+                // Ouvinte para mudanças de conexão
+                window.addEventListener('online', () => {
+                    showNotification('Conexão restaurada', 'success');
+                    // Sincronizar dados quando voltar a ficar online
+                    guardarRegistos();
+                });
+
+                window.addEventListener('offline', () => {
+                    showNotification('Modo offline ativado', 'warning');
+                });
+            }
+
+            // Botão de instalação PWA
+            const installButton = document.getElementById('installButton');
+            
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                installButton.style.display = 'block';
+            });
+
+            installButton.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        installButton.style.display = 'none';
+                        showNotification('Aplicação instalada com sucesso!', 'success');
+                    }
+                    deferredPrompt = null;
+                }
+            });
+
+            window.addEventListener('appinstalled', () => {
+                installButton.style.display = 'none';
+                deferredPrompt = null;
+            });
+
+            // Verificar se está em modo standalone (PWA instalado)
+            if (window.matchMedia('(display-mode: standalone)').matches || 
+                window.navigator.standalone === true) {
+                console.log('Executando como PWA instalado');
+                document.addEventListener('visibilitychange', function() {
+                    if (document.visibilityState === 'visible') {
+                        // Atualizar dados quando o app voltar ao foreground
+                        updateStats();
+                        renderRegistosTable();
+                        renderRecentRegistos();
+                    }
+                });
+            }
+        }
 
         // Configurar event listeners
         function setupEventListeners() {
@@ -2056,37 +2181,3 @@
     </script>
 </body>
 </html>
-// No final do seu script principal, adicione:
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('ServiceWorker registrado com sucesso: ', registration.scope);
-        
-        // Verifica se há uma nova versão disponível
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          console.log('Nova versão do Service Worker encontrada!');
-          
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // Nova versão disponível
-              showNotification('Nova versão disponível! Recarregue a página.', 'info');
-            }
-          });
-        });
-      })
-      .catch(error => {
-        console.log('Falha no registro do ServiceWorker: ', error);
-      });
-  });
-
-  // Ouvinte para mudanças de conexão
-  window.addEventListener('online', () => {
-    showNotification('Conexão restaurada', 'success');
-  });
-
-  window.addEventListener('offline', () => {
-    showNotification('Modo offline ativado', 'warning');
-  });
-}
