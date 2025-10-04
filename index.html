@@ -229,7 +229,7 @@
         .action-buttons {
             display: flex;
             gap: 5px;
-            flex-wrap: nowrap; /* Alterado para nowrap para manter em linha */
+            flex-wrap: nowrap;
             justify-content: flex-start;
             align-items: center;
         }
@@ -559,7 +559,7 @@
             }
             
             .action-buttons {
-                flex-direction: row; /* Mantém em linha mesmo em mobile */
+                flex-direction: row;
                 flex-wrap: wrap;
                 justify-content: center;
             }
@@ -592,7 +592,7 @@
             }
             
             .action-buttons {
-                flex-direction: row; /* Mantém em linha mesmo em mobile */
+                flex-direction: row;
                 flex-wrap: wrap;
                 justify-content: center;
             }
@@ -602,7 +602,6 @@
 <body>
     <div class="container">
         <header>
-            <!-- Logotipo removido conforme solicitado -->
             <div class="header-text">
                 <h1>Dashboard - Registo de Gases Fluorados</h1>
                 <p>Decreto-Lei n.º 145/2017, de 30 de novembro</p>
@@ -1029,41 +1028,60 @@
     <div id="notification" class="notification"></div>
 
     <script>
-        // Dados de exemplo para demonstração
-        let registos = [
-            {
-                id: 1,
-                data: '2025-09-30',
-                cliente: 'Empresa ABC, Lda',
-                tecnico: 'Marco Pinheiro',
-                equipamento: 'Ar Condicionado - Split',
-                marca: 'Daikin',
-                modelo: 'FTXS35K',
-                numerosSerie: ['UI: 123456', 'UE: 789012'],
-                estado: 'pendente',
-                potenciaEletrica: 2.5,
-                potenciaCalor: 3.2,
-                potenciaFrio: 3.0,
-                fluido: 'R-410A',
-                intervencoes: ['Instalação', 'Carga c/ Fluido']
-            },
-            {
-                id: 2,
-                data: '2025-09-28',
-                cliente: 'João Silva',
-                tecnico: 'Marco Pinheiro',
-                equipamento: 'Ar Condicionado - Multisplit',
-                marca: 'Mitsubishi',
-                modelo: 'MSZ-EF35',
-                numerosSerie: ['UI: 345678', 'UI: 456789', 'UE: 567890'],
-                estado: 'validado',
-                potenciaEletrica: 3.8,
-                potenciaCalor: 4.5,
-                potenciaFrio: 4.2,
-                fluido: 'R-32',
-                intervencoes: ['Instalação']
+        // Chave para armazenamento local
+        const STORAGE_KEY = 'registos_gases_fluorados';
+        
+        // Função para carregar registos do localStorage
+        function carregarRegistos() {
+            const registosGuardados = localStorage.getItem(STORAGE_KEY);
+            if (registosGuardados) {
+                return JSON.parse(registosGuardados);
             }
-        ];
+            
+            // Dados de exemplo iniciais
+            return [
+                {
+                    id: 1,
+                    data: '2025-09-30',
+                    cliente: 'Empresa ABC, Lda',
+                    tecnico: 'Marco Pinheiro',
+                    equipamento: 'Ar Condicionado - Split',
+                    marca: 'Daikin',
+                    modelo: 'FTXS35K',
+                    numerosSerie: ['UI: 123456', 'UE: 789012'],
+                    estado: 'pendente',
+                    potenciaEletrica: 2.5,
+                    potenciaCalor: 3.2,
+                    potenciaFrio: 3.0,
+                    fluido: 'R-410A',
+                    intervencoes: ['Instalação', 'Carga c/ Fluido']
+                },
+                {
+                    id: 2,
+                    data: '2025-09-28',
+                    cliente: 'João Silva',
+                    tecnico: 'Marco Pinheiro',
+                    equipamento: 'Ar Condicionado - Multisplit',
+                    marca: 'Mitsubishi',
+                    modelo: 'MSZ-EF35',
+                    numerosSerie: ['UI: 345678', 'UI: 456789', 'UE: 567890'],
+                    estado: 'validado',
+                    potenciaEletrica: 3.8,
+                    potenciaCalor: 4.5,
+                    potenciaFrio: 4.2,
+                    fluido: 'R-32',
+                    intervencoes: ['Instalação']
+                }
+            ];
+        }
+        
+        // Função para guardar registos no localStorage
+        function guardarRegistos() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(registos));
+        }
+        
+        // Inicializar registos a partir do localStorage
+        let registos = carregarRegistos();
 
         let currentRegistoId = null;
         let currentPage = 1;
@@ -1393,6 +1411,9 @@
             // Adicionar aos registos
             registos.unshift(novoRegisto);
             
+            // Guardar no localStorage
+            guardarRegistos();
+            
             // Atualizar UI
             updateStats();
             renderRegistosTable();
@@ -1417,6 +1438,9 @@
                 const updatedRegisto = createRegistoFromFormData(formData, registoId);
                 updatedRegisto.estado = registos[registoIndex].estado; // Manter o estado atual
                 registos[registoIndex] = updatedRegisto;
+                
+                // Guardar no localStorage
+                guardarRegistos();
                 
                 // Atualizar UI
                 updateStats();
@@ -1680,6 +1704,9 @@
                 registos[registoIndex].observacoesValidacao = observacoes;
                 registos[registoIndex].dataValidacao = new Date().toISOString().split('T')[0];
                 
+                // Guardar no localStorage
+                guardarRegistos();
+                
                 // Atualizar UI
                 updateStats();
                 renderRegistosTable();
@@ -1700,6 +1727,9 @@
             const registoIndex = registos.findIndex(r => r.id === currentRegistoId);
             if (registoIndex !== -1) {
                 registos.splice(registoIndex, 1);
+                
+                // Guardar no localStorage
+                guardarRegistos();
                 
                 // Atualizar UI
                 updateStats();
