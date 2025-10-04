@@ -2056,3 +2056,37 @@
     </script>
 </body>
 </html>
+// No final do seu script principal, adicione:
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('ServiceWorker registrado com sucesso: ', registration.scope);
+        
+        // Verifica se há uma nova versão disponível
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          console.log('Nova versão do Service Worker encontrada!');
+          
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // Nova versão disponível
+              showNotification('Nova versão disponível! Recarregue a página.', 'info');
+            }
+          });
+        });
+      })
+      .catch(error => {
+        console.log('Falha no registro do ServiceWorker: ', error);
+      });
+  });
+
+  // Ouvinte para mudanças de conexão
+  window.addEventListener('online', () => {
+    showNotification('Conexão restaurada', 'success');
+  });
+
+  window.addEventListener('offline', () => {
+    showNotification('Modo offline ativado', 'warning');
+  });
+}
