@@ -1,11 +1,8 @@
 // Service Worker para Registo de Gases Fluorados
-const CACHE_NAME = 'gases-fluorados-v1.2';
+const CACHE_NAME = 'gases-fluorados-v1.3';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/styles.css',
-  '/app.js'
+  './',
+  './index.html'
 ];
 
 // Instalação do Service Worker
@@ -76,16 +73,8 @@ self.addEventListener('fetch', event => {
 
             caches.open(CACHE_NAME)
               .then(cache => {
-                // Adiciona apenas URLs importantes ao cache
-                const url = new URL(event.request.url);
-                if (url.origin === location.origin && 
-                    (url.pathname === '/' || 
-                     url.pathname === '/index.html' ||
-                     url.pathname.includes('.css') ||
-                     url.pathname.includes('.js'))) {
-                  cache.put(event.request, responseToCache);
-                  console.log('Service Worker: Cache atualizado para:', event.request.url);
-                }
+                cache.put(event.request, responseToCache);
+                console.log('Service Worker: Cache atualizado para:', event.request.url);
               });
 
             return networkResponse;
@@ -95,10 +84,9 @@ self.addEventListener('fetch', event => {
             
             // Fallback para páginas offline
             if (event.request.destination === 'document') {
-              return caches.match('/index.html');
+              return caches.match('./index.html');
             }
             
-            // Fallback genérico
             return new Response('Modo offline - Aplicação não disponível', {
               status: 503,
               statusText: 'Service Unavailable',
@@ -117,98 +105,3 @@ self.addEventListener('message', event => {
     self.skipWaiting();
   }
 });
-
-// Sincronização em background (quando online novamente)
-self.addEventListener('sync', event => {
-  if (event.tag === 'background-sync') {
-    console.log('Service Worker: Sincronização em background');
-    event.waitUntil(doBackgroundSync());
-  }
-});
-
-// Notificações push
-self.addEventListener('push', event => {
-  if (!event.data) return;
-
-  const data = event.data.json();
-  const options = {
-    body: data.body || 'Nova notificação do sistema',
-    icon: '/icon-192.png',
-    badge: '/icon-72.png',
-    vibrate: [100, 50, 100],
-    data: {
-      url: data.url || '/'
-    },
-    actions: [
-      {
-        action: 'view',
-        title: 'Ver'
-      },
-      {
-        action: 'close',
-        title: 'Fechar'
-      }
-    ]
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(data.title || 'Registo Gases Fluorados', options)
-  );
-});
-
-// Clique em notificações
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
-
-  if (event.action === 'view') {
-    event.waitUntil(
-      clients.matchAll({ type: 'window' }).then(windowClients => {
-        // Foca na janela existente se disponível
-        for (let client of windowClients) {
-          if (client.url === '/' && 'focus' in client) {
-            return client.focus();
-          }
-        }
-        // Abre nova janela se não existir
-        if (clients.openWindow) {
-          return clients.openWindow('/');
-        }
-      })
-    );
-  }
-});
-
-// Função de sincronização em background
-function doBackgroundSync() {
-  return new Promise((resolve, reject) => {
-    // Aqui você pode adicionar lógica para sincronizar dados
-    // quando o dispositivo voltar a ficar online
-    console.log('Service Worker: Executando sincronização em background');
-    
-    // Simula uma sincronização
-    setTimeout(() => {
-      console.log('Service Worker: Sincronização concluída');
-      resolve();
-    }, 1000);
-  });
-}
-
-// Gerenciamento de cache para APIs
-function handleApiRequest(request) {
-  return fetch(request)
-    .then(response => {
-      // Para APIs, não fazemos cache por padrão
-      // mas você pode personalizar conforme necessidade
-      return response;
-    })
-    .catch(error => {
-      console.error('Service Worker: Erro na API:', error);
-      return new Response(JSON.stringify({
-        error: 'Offline',
-        message: 'Não foi possível conectar ao servidor'
-      }), {
-        status: 503,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    });
-}
