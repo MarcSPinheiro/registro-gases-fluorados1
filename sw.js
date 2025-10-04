@@ -1,8 +1,9 @@
 // Service Worker para Registo de Gases Fluorados
-const CACHE_NAME = 'gases-fluorados-v1.3';
+const CACHE_NAME = 'gases-fluorados-v2.0';
 const urlsToCache = [
   './',
-  './index.html'
+  './index.html',
+  './manifest.json'
 ];
 
 // Instalação do Service Worker
