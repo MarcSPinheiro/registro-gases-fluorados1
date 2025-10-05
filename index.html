@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Registo de Gases Fluorados</title>
+    
     <!-- Web App Manifest -->
     <link rel="manifest" href="./manifest.json">
 
@@ -18,9 +19,6 @@
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#2c3e50">
     <meta name="description" content="Sistema de registo de gases fluorados - Decreto-Lei n.º 145/2017">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Registo Gases Fluorados">
     
     <!-- Tesseract.js para OCR -->
     <script src="https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
@@ -1347,7 +1345,21 @@
             loadRegistos();
             setupPWA();
             updateGitHubStatus();
+            registerServiceWorker();
         });
+
+        // ===== SERVICE WORKER =====
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(function(registration) {
+                        console.log('Service Worker registado com sucesso:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('Service Worker registo falhou:', error);
+                    });
+            }
+        }
 
         // ===== FUNÇÕES OCR =====
         async function startCamera() {
@@ -1676,7 +1688,412 @@
             document.getElementById('interventionForm').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // ===== [MANTENHA TODAS AS OUTRAS FUNÇÕES DO CÓDIGO ANTERIOR] =====
+        // ===== FUNÇÕES BÁSICAS DA APLICAÇÃO =====
+        function initializeForm() {
+            // Preencher anos para o select
+            const yearSelect = document.getElementById('manufactureYear');
+            const currentYear = new Date().getFullYear();
+            for (let year = currentYear; year >= 1990; year--) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            }
+            
+            // Definir data atual
+            document.getElementById('interventionDate').valueAsDate = new Date();
+            
+            // Event listeners para formulário
+            document.getElementById('brand').addEventListener('change', function() {
+                document.getElementById('otherBrand').style.display = this.value === 'outra' ? 'block' : 'none';
+            });
+            
+            // Adicionar campos de número de série
+            document.querySelector('.add-serial-btn').addEventListener('click', function() {
+                const container = document.getElementById('serialNumbersContainer');
+                const newEntry = document.createElement('div');
+                newEntry.className = 'serial-number-entry';
+                newEntry.innerHTML = `
+                    <select name="serialType[]">
+                        <option value="UI">UI - Unidade Interior</option>
+                        <option value="UE">UE - Unidade Exterior</option>
+                    </select>
+                    <input type="text" name="serialNumber[]" placeholder="Número de série" required>
+                    <button type="button" class="remove-serial-btn">×</button>
+                `;
+                container.appendChild(newEntry);
+                
+                // Adicionar evento para remover
+                newEntry.querySelector('.remove-serial-btn').addEventListener('click', function() {
+                    if (container.children.length > 1) {
+                        container.removeChild(newEntry);
+                    }
+                });
+            });
+            
+            // Remover evento para os botões existentes
+            document.querySelectorAll('.remove-serial-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const container = document.getElementById('serialNumbersContainer');
+                    if (container.children.length > 1) {
+                        container.removeChild(this.parentElement);
+                    }
+                });
+            });
+        }
+
+        function setupEventListeners() {
+            // Fechar modais
+            document.querySelectorAll('.close-modal').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.closest('.modal').style.display = 'none';
+                });
+            });
+            
+            // Fechar modal ao clicar fora
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Botão de instalação PWA
+            const installButton = document.getElementById('installButton');
+            if (installButton) {
+                installButton.addEventListener('click', installPWA);
+            }
+        }
+
+        function loadRegistos() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            registos = stored ? JSON.parse(stored) : [];
+            updateDashboard();
+            renderRegistosTable();
+        }
+
+        function saveRegistos() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(registos));
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            document.getElementById('totalRegistos').textContent = registos.length;
+            document.getElementById('pendentesValidacao').textContent = registos.filter(r => r.status === 'pendente').length;
+            document.getElementById('registosValidados').textContent = registos.filter(r => r.status === 'validado').length;
+            
+            // Atualizar registos recentes
+            const recentContainer = document.getElementById('recentRegistos');
+            const recentRegistos = registos.slice(-5).reverse();
+            
+            if (recentRegistos.length === 0) {
+                recentContainer.innerHTML = '<div class="empty-state">Nenhum registo encontrado</div>';
+            } else {
+                let html = '<table class="registros-table"><thead><tr><th>Data</th><th>Cliente</th><th>Estado</th></tr></thead><tbody>';
+                recentRegistos.forEach(registo => {
+                    html += `
+                        <tr>
+                            <td>${formatDate(registo.interventionDate)}</td>
+                            <td>${registo.clientName}</td>
+                            <td><span class="status-badge status-${registo.status}">${getStatusText(registo.status)}</span></td>
+                        </tr>
+                    `;
+                });
+                html += '</tbody></table>';
+                recentContainer.innerHTML = html;
+            }
+        }
+
+        function renderRegistosTable() {
+            const tbody = document.getElementById('registrosTableBody');
+            const startIndex = (currentPage - 1) * recordsPerPage;
+            const endIndex = startIndex + recordsPerPage;
+            const filteredRegistos = getFilteredRegistos();
+            const paginatedRegistos = filteredRegistos.slice(startIndex, endIndex);
+            
+            if (paginatedRegistos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum registo encontrado</td></tr>';
+            } else {
+                tbody.innerHTML = paginatedRegistos.map(registo => `
+                    <tr>
+                        <td>${formatDate(registo.interventionDate)}</td>
+                        <td>${registo.clientName}</td>
+                        <td>${registo.technicianName || 'Marco Pinheiro'}</td>
+                        <td>${registo.brand} ${registo.model}</td>
+                        <td><span class="status-badge status-${registo.status}">${getStatusText(registo.status)}</span></td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" onclick="verDetalhes('${registo.id}')" title="Ver detalhes">👁️</button>
+                                <button class="btn btn-warning" onclick="editarRegisto('${registo.id}')" title="Editar">✏️</button>
+                                <button class="btn btn-success" onclick="solicitarValidacao('${registo.id}')" title="Validar">✓</button>
+                                <button class="btn btn-danger" onclick="solicitarEliminacao('${registo.id}')" title="Eliminar">🗑️</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            
+            renderPagination(filteredRegistos.length);
+        }
+
+        function getFilteredRegistos() {
+            const statusFilter = document.getElementById('filterStatus').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            return registos.filter(registo => {
+                const statusMatch = !statusFilter || registo.status === statusFilter;
+                const searchMatch = !searchTerm || 
+                    registo.clientName.toLowerCase().includes(searchTerm) ||
+                    (registo.technicianName && registo.technicianName.toLowerCase().includes(searchTerm));
+                
+                return statusMatch && searchMatch;
+            });
+        }
+
+        function renderPagination(totalRecords) {
+            const totalPages = Math.ceil(totalRecords / recordsPerPage);
+            const pagination = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            
+            // Botão anterior
+            if (currentPage > 1) {
+                html += `<button onclick="changePage(${currentPage - 1})">‹</button>`;
+            }
+            
+            // Páginas
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPage) {
+                    html += `<button class="active">${i}</button>`;
+                } else {
+                    html += `<button onclick="changePage(${i})">${i}</button>`;
+                }
+            }
+            
+            // Botão seguinte
+            if (currentPage < totalPages) {
+                html += `<button onclick="changePage(${currentPage + 1})">›</button>`;
+            }
+            
+            pagination.innerHTML = html;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderRegistosTable();
+        }
+
+        function applyFilters() {
+            currentPage = 1;
+            renderRegistosTable();
+        }
+
+        function clearFilters() {
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('searchInput').value = '';
+            applyFilters();
+        }
+
+        // ===== FUNÇÕES DO FORMULÁRIO =====
+        function novoRegisto() {
+            isEditMode = false;
+            document.getElementById('editModeBanner').style.display = 'none';
+            document.getElementById('formTitle').textContent = 'Novo Registo de Intervenção';
+            document.getElementById('interventionForm').reset();
+            document.getElementById('editRegistoId').value = '';
+            document.getElementById('cancelEditButton').style.display = 'none';
+            document.getElementById('interventionDate').valueAsDate = new Date();
+            openTab('novoRegisto');
+        }
+
+        function submitForm(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const registo = {
+                id: isEditMode ? document.getElementById('editRegistoId').value : generateId(),
+                interventionDate: formData.get('interventionDate'),
+                clientName: formData.get('clientName'),
+                equipmentOwner: formData.get('equipmentOwner'),
+                equipmentLocation: formData.get('equipmentLocation'),
+                locality: formData.get('locality'),
+                postalCode: formData.get('postalCode'),
+                brand: formData.get('brand') === 'outra' ? formData.get('otherBrand') : formData.get('brand'),
+                model: formData.get('model'),
+                serialNumbers: Array.from(document.querySelectorAll('input[name="serialNumber[]"]')).map((input, index) => ({
+                    type: document.querySelectorAll('select[name="serialType[]"]')[index].value,
+                    number: input.value
+                })),
+                manufactureYear: formData.get('manufactureYear'),
+                electricPower: parseFloat(formData.get('electricPower')) || 0,
+                heatPower: parseFloat(formData.get('heatPower')) || 0,
+                coldPower: parseFloat(formData.get('coldPower')) || 0,
+                installationType: formData.get('installationType'),
+                hermeticSystem: formData.get('hermeticSystem'),
+                existingFluid: formData.get('existingFluid'),
+                nominalFluidQuantity: parseFloat(formData.get('nominalFluidQuantity')) || 0,
+                nominalFluidCO2: parseFloat(formData.get('nominalFluidCO2')) || 0,
+                interventionTypes: Array.from(document.querySelectorAll('input[name="interventionType"]:checked')).map(cb => cb.value),
+                otherIntervention: formData.get('otherIntervention'),
+                loadedFluidType: formData.get('loadedFluidType'),
+                virginFluid: parseFloat(formData.get('virginFluid')) || 0,
+                recycledFluid: parseFloat(formData.get('recycledFluid')) || 0,
+                valuedFluid: parseFloat(formData.get('valuedFluid')) || 0,
+                recoveredFluid: parseFloat(formData.get('recoveredFluid')) || 0,
+                purposes: Array.from(document.querySelectorAll('input[name="purpose"]:checked')).map(cb => cb.value),
+                destructionRecipient: formData.get('destructionRecipient'),
+                observations: formData.get('observations'),
+                status: 'pendente',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            if (isEditMode) {
+                // Atualizar registo existente
+                const index = registos.findIndex(r => r.id === registo.id);
+                if (index !== -1) {
+                    registos[index] = { ...registos[index], ...registo, updatedAt: new Date().toISOString() };
+                }
+            } else {
+                // Adicionar novo registo
+                registos.push(registo);
+            }
+            
+            saveRegistos();
+            showNotification(`Registo ${isEditMode ? 'atualizado' : 'criado'} com sucesso!`, 'success');
+            openTab('registos');
+        }
+
+        function editarRegisto(id) {
+            const registo = registos.find(r => r.id === id);
+            if (!registo) return;
+            
+            isEditMode = true;
+            currentRegistoId = id;
+            
+            document.getElementById('editModeBanner').style.display = 'block';
+            document.getElementById('formTitle').textContent = 'Editar Registo de Intervenção';
+            document.getElementById('editRegistoId').value = id;
+            document.getElementById('cancelEditButton').style.display = 'block';
+            
+            // Preencher formulário
+            document.getElementById('interventionDate').value = registo.interventionDate;
+            document.getElementById('clientName').value = registo.clientName;
+            document.getElementById('equipmentOwner').value = registo.equipmentOwner;
+            document.getElementById('equipmentLocation').value = registo.equipmentLocation;
+            document.getElementById('locality').value = registo.locality;
+            document.getElementById('postalCode').value = registo.postalCode;
+            document.getElementById('brand').value = registo.brand;
+            document.getElementById('model').value = registo.model;
+            document.getElementById('manufactureYear').value = registo.manufactureYear;
+            document.getElementById('electricPower').value = registo.electricPower;
+            document.getElementById('heatPower').value = registo.heatPower;
+            document.getElementById('coldPower').value = registo.coldPower;
+            document.getElementById('installationType').value = registo.installationType;
+            document.getElementById('hermeticSystem').value = registo.hermeticSystem;
+            document.getElementById('existingFluid').value = registo.existingFluid;
+            document.getElementById('nominalFluidQuantity').value = registo.nominalFluidQuantity;
+            document.getElementById('nominalFluidCO2').value = registo.nominalFluidCO2;
+            document.getElementById('loadedFluidType').value = registo.loadedFluidType;
+            document.getElementById('virginFluid').value = registo.virginFluid;
+            document.getElementById('recycledFluid').value = registo.recycledFluid;
+            document.getElementById('valuedFluid').value = registo.valuedFluid;
+            document.getElementById('recoveredFluid').value = registo.recoveredFluid;
+            document.getElementById('otherIntervention').value = registo.otherIntervention || '';
+            document.getElementById('destructionRecipient').value = registo.destructionRecipient || '';
+            document.getElementById('observations').value = registo.observations || '';
+            
+            // Preencher números de série
+            const serialContainer = document.getElementById('serialNumbersContainer');
+            serialContainer.innerHTML = '';
+            registo.serialNumbers.forEach((serial, index) => {
+                const newEntry = document.createElement('div');
+                newEntry.className = 'serial-number-entry';
+                newEntry.innerHTML = `
+                    <select name="serialType[]">
+                        <option value="UI" ${serial.type === 'UI' ? 'selected' : ''}>UI - Unidade Interior</option>
+                        <option value="UE" ${serial.type === 'UE' ? 'selected' : ''}>UE - Unidade Exterior</option>
+                    </select>
+                    <input type="text" name="serialNumber[]" value="${serial.number}" placeholder="Número de série" required>
+                    <button type="button" class="remove-serial-btn">×</button>
+                `;
+                serialContainer.appendChild(newEntry);
+            });
+            
+            // Adicionar evento para remover
+            document.querySelectorAll('.remove-serial-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const container = document.getElementById('serialNumbersContainer');
+                    if (container.children.length > 1) {
+                        container.removeChild(this.parentElement);
+                    }
+                });
+            });
+            
+            openTab('novoRegisto');
+        }
+
+        // ===== FUNÇÕES AUXILIARES =====
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-PT');
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'pendente': 'Pendente',
+                'validado': 'Validado',
+                'aprovado': 'Aprovado'
+            };
+            return statusMap[status] || status;
+        }
+
+        function openTab(tabName) {
+            // Ocultar todas as tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remover active de todos os tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Mostrar tab selecionada
+            document.getElementById(tabName).classList.add('active');
+            
+            // Ativar botão da tab
+            event.target.classList.add('active');
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
         // ===== GESTÃO GITHUB =====
         function loadGitHubConfig() {
             const config = localStorage.getItem(GITHUB_CONFIG_KEY);
@@ -1741,11 +2158,298 @@
             }
         }
 
-        // ===== [CONTINUE COM TODAS AS OUTRAS FUNÇÕES DO CÓDIGO ORIGINAL] =====
-        // ===== API GITHUB, GESTÃO DE DADOS, FORMULÁRIOS, ETC. =====
+        async function syncWithGitHub() {
+            if (!githubConfig) {
+                showNotification('Configure o GitHub primeiro', 'error');
+                openModal('githubLoginModal');
+                return;
+            }
+            
+            try {
+                showNotification('A sincronizar com GitHub...', 'warning');
+                
+                // Aqui implementaria a lógica de sincronização com GitHub
+                // Por enquanto, apenas simula
+                setTimeout(() => {
+                    showNotification('Sincronização concluída!', 'success');
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Erro na sincronização:', error);
+                showNotification('Erro na sincronização: ' + error.message, 'error');
+            }
+        }
 
-        // ... [O resto do código JavaScript permanece igual ao anterior]
+        function exportData() {
+            const dataStr = JSON.stringify(registos, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `registos-gases-fluorados-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Dados exportados com sucesso!', 'success');
+        }
 
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        registos = importedData;
+                        saveRegistos();
+                        showNotification('Dados importados com sucesso!', 'success');
+                    } else {
+                        showNotification('Formato de ficheiro inválido', 'error');
+                    }
+                } catch (error) {
+                    showNotification('Erro ao importar ficheiro: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ===== PWA FUNCTIONS =====
+        function setupPWA() {
+            let deferredPrompt;
+            const installButton = document.getElementById('installButton');
+            
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                installButton.style.display = 'block';
+            });
+            
+            if (installButton) {
+                installButton.addEventListener('click', installPWA);
+            }
+            
+            // Verificar se já está instalado
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                installButton.style.display = 'none';
+            }
+        }
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                        document.getElementById('installButton').style.display = 'none';
+                    } else {
+                        console.log('User dismissed the install prompt');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        // ===== FUNÇÕES DE VALIDAÇÃO E ELIMINAÇÃO (SIMPLIFICADAS) =====
+        function solicitarValidacao(id) {
+            currentRegistoId = id;
+            openModal('validacaoModal');
+        }
+
+        function validarRegisto() {
+            if (currentRegistoId) {
+                const registo = registos.find(r => r.id === currentRegistoId);
+                if (registo) {
+                    registo.status = 'validado';
+                    registo.validatedAt = new Date().toISOString();
+                    saveRegistos();
+                    showNotification('Registo validado com sucesso!', 'success');
+                    closeModal('validacaoModal');
+                }
+            }
+        }
+
+        function solicitarEliminacao(id) {
+            currentRegistoId = id;
+            openModal('eliminarRegistoModal');
+            
+            document.getElementById('confirmarEliminacao').onclick = function() {
+                eliminarRegisto(currentRegistoId);
+            };
+        }
+
+        function eliminarRegisto(id) {
+            registos = registos.filter(r => r.id !== id);
+            saveRegistos();
+            showNotification('Registo eliminado com sucesso!', 'success');
+            closeModal('eliminarRegistoModal');
+        }
+
+        function verDetalhes(id) {
+            const registo = registos.find(r => r.id === id);
+            if (!registo) return;
+            
+            const modalContent = document.getElementById('detalhesRegistoContent');
+            modalContent.innerHTML = `
+                <div style="max-height: 60vh; overflow-y: auto;">
+                    <h4>Dados da Intervenção</h4>
+                    <p><strong>Data:</strong> ${formatDate(registo.interventionDate)}</p>
+                    <p><strong>Cliente:</strong> ${registo.clientName}</p>
+                    <p><strong>Localização:</strong> ${registo.equipmentLocation}, ${registo.locality} ${registo.postalCode}</p>
+                    
+                    <h4 style="margin-top: 20px;">Equipamento</h4>
+                    <p><strong>Marca/Modelo:</strong> ${registo.brand} ${registo.model}</p>
+                    <p><strong>Ano Fabrico:</strong> ${registo.manufactureYear}</p>
+                    <p><strong>Números de Série:</strong></p>
+                    <ul>
+                        ${registo.serialNumbers.map(serial => `<li>${serial.type}: ${serial.number}</li>`).join('')}
+                    </ul>
+                    
+                    <h4 style="margin-top: 20px;">Fluidos</h4>
+                    <p><strong>Fluido Existente:</strong> ${registo.existingFluid || 'N/A'}</p>
+                    <p><strong>Quantidade Nominal:</strong> ${registo.nominalFluidQuantity} kg</p>
+                    
+                    <h4 style="margin-top: 20px;">Estado</h4>
+                    <p><span class="status-badge status-${registo.status}">${getStatusText(registo.status)}</span></p>
+                    
+                    ${registo.observations ? `
+                    <h4 style="margin-top: 20px;">Observações</h4>
+                    <p>${registo.observations}</p>
+                    ` : ''}
+                </div>
+            `;
+            
+            openModal('detalhesRegistoModal');
+        }
+    </script>
+
+    <!-- Service Worker Inline -->
+    <script>
+        // Service Worker em linha para garantir funcionamento offline
+        if ('serviceWorker' in navigator) {
+            const swScript = `
+                // Service Worker para Registo de Gases Fluorados
+                const CACHE_NAME = 'gases-fluorados-v2.0';
+                const urlsToCache = [
+                    './',
+                    './index.html',
+                    './manifest.json'
+                ];
+
+                // Instalação do Service Worker
+                self.addEventListener('install', event => {
+                    console.log('Service Worker: Installing...');
+                    
+                    event.waitUntil(
+                        caches.open(CACHE_NAME)
+                            .then(cache => {
+                                console.log('Service Worker: Caching arquivos');
+                                return cache.addAll(urlsToCache);
+                            })
+                            .then(() => {
+                                console.log('Service Worker: Instalado com sucesso');
+                                return self.skipWaiting();
+                            })
+                            .catch(error => {
+                                console.error('Service Worker: Erro no cache', error);
+                            })
+                    );
+                });
+
+                // Ativação do Service Worker
+                self.addEventListener('activate', event => {
+                    console.log('Service Worker: Ativando...');
+                    
+                    event.waitUntil(
+                        caches.keys().then(cacheNames => {
+                            return Promise.all(
+                                cacheNames.map(cache => {
+                                    if (cache !== CACHE_NAME) {
+                                        console.log('Service Worker: Limpando cache antigo', cache);
+                                        return caches.delete(cache);
+                                    }
+                                })
+                            );
+                        }).then(() => {
+                            console.log('Service Worker: Ativado com sucesso');
+                            return self.clients.claim();
+                        })
+                    );
+                });
+
+                // Interceptação de requisições
+                self.addEventListener('fetch', event => {
+                    // Ignora requisições não GET
+                    if (event.request.method !== 'GET') return;
+
+                    event.respondWith(
+                        caches.match(event.request)
+                            .then(response => {
+                                // Retorna do cache se disponível
+                                if (response) {
+                                    console.log('Service Worker: Retornando do cache:', event.request.url);
+                                    return response;
+                                }
+
+                                // Faz requisição à rede
+                                return fetch(event.request)
+                                    .then(networkResponse => {
+                                        // Verifica se a resposta é válida
+                                        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+                                            return networkResponse;
+                                        }
+
+                                        // Clona a resposta para adicionar ao cache
+                                        const responseToCache = networkResponse.clone();
+
+                                        caches.open(CACHE_NAME)
+                                            .then(cache => {
+                                                cache.put(event.request, responseToCache);
+                                                console.log('Service Worker: Cache atualizado para:', event.request.url);
+                                            });
+
+                                        return networkResponse;
+                                    })
+                                    .catch(error => {
+                                        console.error('Service Worker: Erro na requisição:', error);
+                                        
+                                        // Fallback para páginas offline
+                                        if (event.request.destination === 'document') {
+                                            return caches.match('./index.html');
+                                        }
+                                        
+                                        return new Response('Modo offline - Aplicação não disponível', {
+                                            status: 503,
+                                            statusText: 'Service Unavailable',
+                                            headers: new Headers({
+                                                'Content-Type': 'text/plain'
+                                            })
+                                        });
+                                    });
+                            })
+                    );
+                });
+
+                // Mensagens do Service Worker
+                self.addEventListener('message', event => {
+                    if (event.data && event.data.type === 'SKIP_WAITING') {
+                        self.skipWaiting();
+                    }
+                });
+            `;
+
+            // Criar blob e registrar service worker
+            const blob = new Blob([swScript], { type: 'application/javascript' });
+            const swURL = URL.createObjectURL(blob);
+            
+            navigator.serviceWorker.register(swURL)
+                .then(registration => console.log('SW registered'))
+                .catch(error => console.log('SW registration failed'));
+        }
     </script>
 </body>
 </html>
