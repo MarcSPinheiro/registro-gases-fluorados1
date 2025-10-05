@@ -22,6 +22,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Registo Gases Fluorados">
     
+    <!-- Tesseract.js para OCR -->
+    <script src="https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
+    
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -612,6 +615,88 @@
             background-color: #e74c3c;
         }
         
+        /* Estilos para OCR */
+        .ocr-section {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .ocr-preview {
+            max-width: 100%;
+            max-height: 300px;
+            margin: 15px 0;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .ocr-results {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: left;
+            display: none;
+        }
+        
+        .ocr-loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        #cameraVideo {
+            width: 100%;
+            border-radius: 8px;
+            background: #000;
+        }
+        
+        .camera-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        
+        .capture-btn {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
         @media (max-width: 768px) {
             header {
                 flex-direction: column;
@@ -811,6 +896,51 @@
                 
                 <h2 id="formTitle">Novo Registo de Intervenção</h2>
                 
+                <!-- Seção OCR para fotos das etiquetas -->
+                <div class="form-section">
+                    <h2>📸 SCAN AUTOMÁTICO DA ETIQUETA</h2>
+                    <div class="ocr-section">
+                        <p><strong>Capture uma foto da etiqueta do equipamento para preenchimento automático</strong></p>
+                        
+                        <div class="camera-container" id="cameraContainer" style="display: none;">
+                            <video id="cameraVideo" autoplay playsinline></video>
+                            <div class="camera-controls">
+                                <button class="capture-btn" onclick="captureImage()">
+                                    📷 Capturar Foto
+                                </button>
+                                <button class="btn btn-danger" onclick="stopCamera()">❌ Cancelar</button>
+                            </div>
+                        </div>
+                        
+                        <div id="cameraButtons">
+                            <button class="btn btn-success" onclick="startCamera()" style="margin: 5px;">
+                                📷 Usar Câmara
+                            </button>
+                            <div class="file-input-wrapper" style="display: inline-block;">
+                                <button class="btn btn-primary" style="margin: 5px;">
+                                    📁 Carregar Foto
+                                </button>
+                                <input type="file" id="imageUpload" accept="image/*" capture="environment" onchange="handleImageUpload(event)">
+                            </div>
+                        </div>
+                        
+                        <img id="ocrPreview" class="ocr-preview" alt="Pré-visualização">
+                        
+                        <div class="ocr-loading" id="ocrLoading">
+                            <div class="spinner"></div>
+                            <p>A processar imagem e extrair dados...</p>
+                        </div>
+                        
+                        <div id="ocrResults" class="ocr-results">
+                            <h4>📋 Dados Extraídos da Etiqueta:</h4>
+                            <div id="extractedData"></div>
+                            <button class="btn btn-success" onclick="applyExtractedData()" style="margin-top: 10px;">
+                                ✅ Aplicar Dados ao Formulário
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
                 <form id="interventionForm" onsubmit="submitForm(event)">
                     <input type="hidden" id="editRegistoId" name="editRegistoId" value="">
                     
@@ -893,6 +1023,7 @@
                             <label for="brand" class="required">Marca</label>
                             <select id="brand" name="brand" required>
                                 <option value="">Escolha Uma Marca</option>
+                                <option value="GREE">GREE</option>
                                 <option value="Daikin">Daikin</option>
                                 <option value="Mitsubishi">Mitsubishi</option>
                                 <option value="LG">LG</option>
@@ -901,7 +1032,6 @@
                                 <option value="Panasonic">Panasonic</option>
                                 <option value="Carrier">Carrier</option>
                                 <option value="Trane">Trane</option>
-                                <option value="Gree">Gree</option>
                                 <option value="outra">Outra</option>
                             </select>
                             <input type="text" id="otherBrand" name="otherBrand" class="other-brand-input" placeholder="Especifique a marca">
@@ -1197,6 +1327,8 @@
         const recordsPerPage = 10;
         let isEditMode = false;
         let githubConfig = null;
+        let currentStream = null;
+        let extractedData = {};
 
         // ===== INICIALIZAÇÃO =====
         document.addEventListener('DOMContentLoaded', function() {
@@ -1207,6 +1339,289 @@
             setupPWA();
             updateGitHubStatus();
         });
+
+        // ===== FUNÇÕES OCR =====
+        async function startCamera() {
+            try {
+                const video = document.getElementById('cameraVideo');
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                
+                currentStream = stream;
+                video.srcObject = stream;
+                document.getElementById('cameraContainer').style.display = 'block';
+                document.getElementById('cameraButtons').style.display = 'none';
+                
+            } catch (error) {
+                console.error('Erro ao aceder à câmara:', error);
+                showNotification('Erro ao aceder à câmara. Verifique as permissões.', 'error');
+            }
+        }
+
+        function stopCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+            document.getElementById('cameraContainer').style.display = 'none';
+            document.getElementById('cameraButtons').style.display = 'block';
+        }
+
+        function captureImage() {
+            const video = document.getElementById('cameraVideo');
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            canvas.toBlob(function(blob) {
+                processImage(blob);
+            }, 'image/jpeg', 0.8);
+            
+            stopCamera();
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                processImage(file);
+            }
+        }
+
+        async function processImage(imageBlob) {
+            const preview = document.getElementById('ocrPreview');
+            const loading = document.getElementById('ocrLoading');
+            const results = document.getElementById('ocrResults');
+            
+            // Mostrar pré-visualização
+            preview.src = URL.createObjectURL(imageBlob);
+            preview.style.display = 'block';
+            
+            // Mostrar loading
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            
+            try {
+                // Usar Tesseract.js para OCR
+                const { data: { text } } = await Tesseract.recognize(
+                    imageBlob,
+                    'por+eng', // Português e Inglês
+                    { 
+                        logger: m => console.log(m) 
+                    }
+                );
+                
+                console.log('Texto extraído:', text);
+                extractEquipmentData(text);
+                
+            } catch (error) {
+                console.error('Erro no OCR:', error);
+                showNotification('Erro ao processar a imagem. Tente novamente.', 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function extractEquipmentData(text) {
+            extractedData = {};
+            const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+            
+            // Procurar marca
+            const marcas = ['GREE', 'DAIKIN', 'MITSUBISHI', 'LG', 'SAMSUNG', 'FUJITSU', 'PANASONIC', 'CARRIER', 'TRANE'];
+            for (const marca of marcas) {
+                if (text.toUpperCase().includes(marca)) {
+                    extractedData.marca = marca;
+                    break;
+                }
+            }
+            
+            // Procurar modelo
+            const modelPatterns = [
+                /Model[o]?[\s:]*([^\n]+)/i,
+                /Modelo[\s:]*([^\n]+)/i,
+                /MODEL[\s:]*([^\n]+)/i
+            ];
+            
+            for (const pattern of modelPatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    extractedData.modelo = match[1].trim();
+                    break;
+                }
+            }
+            
+            // Procurar número de série
+            const serialPatterns = [
+                /Serial No\.?[\s:]*([^\n]+)/i,
+                /N[º°]?[\s]*S[ée]rie[\s:]*([^\n]+)/i,
+                /SERIAL[\s:]*([^\n]+)/i,
+                /N[º°]?[\s]*SERIAL[\s:]*([^\n]+)/i
+            ];
+            
+            for (const pattern of serialPatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    extractedData.numeroSerie = match[1].trim();
+                    break;
+                }
+            }
+            
+            // Procurar potências
+            const powerPatterns = [
+                /Cooling Capacity[\s:]*([\d.,]+)\s*kW/i,
+                /Capacidade de Arrefecimento[\s:]*([\d.,]+)\s*kW/i,
+                /Heating Capacity[\s:]*([\d.,]+)\s*kW/i,
+                /Capacidade de Aquecimento[\s:]*([\d.,]+)\s*kW/i,
+                /Potência Fria[\s:]*([\d.,]+)\s*kW/i,
+                /Potência Calor[\s:]*([\d.,]+)\s*kW/i
+            ];
+            
+            for (const pattern of powerPatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    const power = parseFloat(match[1].replace(',', '.'));
+                    if (pattern.toString().includes('Cooling') || pattern.toString().includes('Arrefecimento') || pattern.toString().includes('Fria')) {
+                        extractedData.potenciaFrio = power;
+                    } else if (pattern.toString().includes('Heating') || pattern.toString().includes('Aquecimento') || pattern.toString().includes('Calor')) {
+                        extractedData.potenciaCalor = power;
+                    }
+                }
+            }
+            
+            // Procurar ano de fabrico
+            const yearPattern = /(20\d{2})\.?\s*(0[1-9]|1[0-2])/;
+            const yearMatch = text.match(yearPattern);
+            if (yearMatch) {
+                extractedData.anoFabrico = yearMatch[1];
+            }
+            
+            // Procurar tipo de fluido
+            if (text.toUpperCase().includes('R32') || text.includes('R-32')) {
+                extractedData.fluido = 'R-32';
+            } else if (text.toUpperCase().includes('R410') || text.includes('R-410')) {
+                extractedData.fluido = 'R-410A';
+            } else if (text.toUpperCase().includes('R22') || text.includes('R-22')) {
+                extractedData.fluido = 'R-22';
+            }
+            
+            // Procurar carga de refrigerante
+            const refrigerantPattern = /Refrigerant Charge[\s:]*([\d.,]+)\s*kg/i;
+            const refrigerantMatch = text.match(refrigerantPattern);
+            if (refrigerantMatch) {
+                extractedData.cargaRefrigerante = parseFloat(refrigerantMatch[1].replace(',', '.'));
+            }
+            
+            displayExtractedData();
+        }
+
+        function displayExtractedData() {
+            const resultsDiv = document.getElementById('extractedData');
+            let html = '<div style="font-size: 0.9rem;">';
+            
+            if (extractedData.marca) {
+                html += `<p><strong>Marca:</strong> ${extractedData.marca}</p>`;
+            }
+            
+            if (extractedData.modelo) {
+                html += `<p><strong>Modelo:</strong> ${extractedData.modelo}</p>`;
+            }
+            
+            if (extractedData.numeroSerie) {
+                html += `<p><strong>Nº Série:</strong> ${extractedData.numeroSerie}</p>`;
+            }
+            
+            if (extractedData.potenciaFrio) {
+                html += `<p><strong>Potência Frio:</strong> ${extractedData.potenciaFrio} kW</p>`;
+            }
+            
+            if (extractedData.potenciaCalor) {
+                html += `<p><strong>Potência Calor:</strong> ${extractedData.potenciaCalor} kW</p>`;
+            }
+            
+            if (extractedData.anoFabrico) {
+                html += `<p><strong>Ano Fabrico:</strong> ${extractedData.anoFabrico}</p>`;
+            }
+            
+            if (extractedData.fluido) {
+                html += `<p><strong>Fluido:</strong> ${extractedData.fluido}</p>`;
+            }
+            
+            if (extractedData.cargaRefrigerante) {
+                html += `<p><strong>Carga Refrigerante:</strong> ${extractedData.cargaRefrigerante} kg</p>`;
+            }
+            
+            if (Object.keys(extractedData).length === 0) {
+                html += '<p style="color: #e74c3c;">Não foi possível extrair dados da etiqueta. Tente uma foto mais nítida.</p>';
+            }
+            
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+            
+            document.getElementById('ocrResults').style.display = 'block';
+            showNotification('Dados extraídos com sucesso!', 'success');
+        }
+
+        function applyExtractedData() {
+            // Aplicar marca
+            if (extractedData.marca) {
+                const brandSelect = document.getElementById('brand');
+                const option = Array.from(brandSelect.options).find(opt => 
+                    opt.value.toUpperCase() === extractedData.marca.toUpperCase()
+                );
+                
+                if (option) {
+                    brandSelect.value = option.value;
+                } else {
+                    brandSelect.value = 'outra';
+                    document.getElementById('otherBrand').value = extractedData.marca;
+                    document.getElementById('otherBrand').style.display = 'block';
+                }
+            }
+            
+            // Aplicar modelo
+            if (extractedData.modelo) {
+                document.getElementById('model').value = extractedData.modelo;
+            }
+            
+            // Aplicar número de série
+            if (extractedData.numeroSerie) {
+                const serialInputs = document.querySelectorAll('input[name="serialNumber[]"]');
+                if (serialInputs[0]) {
+                    serialInputs[0].value = extractedData.numeroSerie;
+                }
+            }
+            
+            // Aplicar ano de fabrico
+            if (extractedData.anoFabrico) {
+                document.getElementById('manufactureYear').value = extractedData.anoFabrico;
+            }
+            
+            // Aplicar potências
+            if (extractedData.potenciaFrio) {
+                document.getElementById('coldPower').value = extractedData.potenciaFrio;
+            }
+            
+            if (extractedData.potenciaCalor) {
+                document.getElementById('heatPower').value = extractedData.potenciaCalor;
+            }
+            
+            // Aplicar fluido
+            if (extractedData.fluido) {
+                document.getElementById('existingFluid').value = extractedData.fluido;
+                document.getElementById('loadedFluidType').value = extractedData.fluido;
+            }
+            
+            // Aplicar carga de refrigerante
+            if (extractedData.cargaRefrigerante) {
+                document.getElementById('nominalFluidQuantity').value = extractedData.cargaRefrigerante;
+            }
+            
+            showNotification('Dados aplicados ao formulário!', 'success');
+            document.getElementById('ocrResults').style.display = 'none';
+        }
 
         // ===== GESTÃO GITHUB =====
         function loadGitHubConfig() {
@@ -1485,8 +1900,284 @@
             event.target.value = '';
         }
 
-        // ===== FUNÇÕES DO FORMULÁRIO (mantenha as suas funções originais) =====
-        // ... [Todas as suas funções originais aqui: initializeForm, setupEventListeners, openTab, novoRegisto, resetForm, etc.]
+        // ===== FUNÇÕES DO FORMULÁRIO =====
+        function initializeForm() {
+            // Preencher anos para o campo "Ano de Fabrico"
+            const yearSelect = document.getElementById('manufactureYear');
+            const currentYear = new Date().getFullYear();
+            
+            for (let year = currentYear; year >= 1980; year--) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            }
+            
+            // Definir data atual como padrão
+            document.getElementById('interventionDate').valueAsDate = new Date();
+            
+            // Inicialmente ocultar estes campos
+            document.getElementById('otherBrand').style.display = 'none';
+            document.getElementById('otherIntervention').style.display = 'none';
+            document.getElementById('destructionRecipient').style.display = 'none';
+        }
+
+        function setupEventListeners() {
+            // Botões de números de série
+            document.querySelector('.add-serial-btn').addEventListener('click', addSerialNumber);
+            
+            // Modal buttons
+            document.querySelector('#detalhesRegistoModal .close-modal').addEventListener('click', () => closeModal('detalhesRegistoModal'));
+            document.querySelector('#validacaoModal .close-modal').addEventListener('click', () => closeModal('validacaoModal'));
+            document.querySelector('#eliminarRegistoModal .close-modal').addEventListener('click', () => closeModal('eliminarRegistoModal'));
+            document.querySelector('#githubLoginModal .close-modal').addEventListener('click', () => closeModal('githubLoginModal'));
+            
+            // Botões de ação do formulário
+            document.querySelector('.btn-duplicate').addEventListener('click', duplicateForm);
+            document.querySelector('#cancelEditButton').addEventListener('click', cancelEdit);
+            
+            // Botões de eliminação
+            document.getElementById('confirmarEliminacao').addEventListener('click', eliminarRegisto);
+            
+            // Campos dinâmicos
+            document.getElementById('brand').addEventListener('change', function() {
+                const otherBrandInput = document.getElementById('otherBrand');
+                if (this.value === 'outra') {
+                    otherBrandInput.style.display = 'block';
+                    otherBrandInput.required = true;
+                } else {
+                    otherBrandInput.style.display = 'none';
+                    otherBrandInput.required = false;
+                    otherBrandInput.value = '';
+                }
+            });
+            
+            document.querySelector('input[value="outra"]').addEventListener('change', function() {
+                document.getElementById('otherIntervention').style.display = this.checked ? 'block' : 'none';
+            });
+            
+            document.querySelector('input[value="destruicao"]').addEventListener('change', function() {
+                document.getElementById('destructionRecipient').style.display = this.checked ? 'block' : 'none';
+            });
+        }
+
+        function openTab(tabName) {
+            // Esconder todas as tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remover classe active de todos os botões
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Mostrar a tab selecionada
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function novoRegisto() {
+            resetForm();
+            openTab('novoRegisto');
+        }
+
+        function resetForm() {
+            document.getElementById('interventionForm').reset();
+            document.getElementById('interventionDate').valueAsDate = new Date();
+            document.getElementById('editRegistoId').value = '';
+            
+            // Reset números de série
+            const serialContainer = document.getElementById('serialNumbersContainer');
+            serialContainer.innerHTML = `
+                <div class="serial-number-entry">
+                    <select name="serialType[]">
+                        <option value="UI">UI - Unidade Interior</option>
+                        <option value="UE">UE - Unidade Exterior</option>
+                    </select>
+                    <input type="text" name="serialNumber[]" placeholder="Número de série" required>
+                    <button type="button" class="remove-serial-btn">×</button>
+                </div>
+            `;
+            
+            // Reconfigurar event listeners para os novos botões
+            setupSerialNumberListeners();
+            
+            // Reset checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+            
+            // Ocultar campos especiais
+            document.getElementById('otherBrand').style.display = 'none';
+            document.getElementById('otherIntervention').style.display = 'none';
+            document.getElementById('destructionRecipient').style.display = 'none';
+            
+            // Reset OCR
+            document.getElementById('ocrPreview').style.display = 'none';
+            document.getElementById('ocrResults').style.display = 'none';
+            extractedData = {};
+            
+            // Modo normal (não edição)
+            isEditMode = false;
+            document.getElementById('editModeBanner').style.display = 'none';
+            document.getElementById('formTitle').textContent = 'Novo Registo de Intervenção';
+            document.getElementById('submitButton').textContent = 'Submeter Registo';
+            document.getElementById('cancelEditButton').style.display = 'none';
+        }
+
+        function setupSerialNumberListeners() {
+            document.querySelectorAll('.remove-serial-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    removeSerialNumber(this);
+                });
+            });
+        }
+
+        function addSerialNumber() {
+            const container = document.getElementById('serialNumbersContainer');
+            const newEntry = document.createElement('div');
+            newEntry.className = 'serial-number-entry';
+            newEntry.innerHTML = `
+                <select name="serialType[]">
+                    <option value="UI">UI - Unidade Interior</option>
+                    <option value="UE">UE - Unidade Exterior</option>
+                </select>
+                <input type="text" name="serialNumber[]" placeholder="Número de série" required>
+                <button type="button" class="remove-serial-btn">×</button>
+            `;
+            container.appendChild(newEntry);
+            
+            // Configurar listener para o novo botão
+            newEntry.querySelector('.remove-serial-btn').addEventListener('click', function() {
+                removeSerialNumber(this);
+            });
+        }
+        
+        function removeSerialNumber(button) {
+            const entries = document.querySelectorAll('.serial-number-entry');
+            if (entries.length > 1) {
+                button.parentElement.remove();
+            } else {
+                showNotification('É necessário pelo menos um número de série.', 'warning');
+            }
+        }
+
+        function duplicateForm() {
+            if (validateForm()) {
+                // Guarda os dados atuais
+                const currentData = getFormData();
+                
+                // Submeter o registo atual
+                submitFormData(currentData);
+                
+                // Limpa apenas os campos que devem ser alterados
+                document.getElementById('interventionDate').valueAsDate = new Date();
+                
+                // Limpa os números de série, mantendo apenas um campo vazio
+                const serialContainer = document.getElementById('serialNumbersContainer');
+                serialContainer.innerHTML = `
+                    <div class="serial-number-entry">
+                        <select name="serialType[]">
+                            <option value="UI">UI - Unidade Interior</option>
+                            <option value="UE">UE - Unidade Exterior</option>
+                        </select>
+                        <input type="text" name="serialNumber[]" placeholder="Número de série" required>
+                        <button type="button" class="remove-serial-btn">×</button>
+                    </div>
+                `;
+                
+                // Reconfigurar listeners
+                setupSerialNumberListeners();
+                
+                showNotification('Registo submetido e duplicado! Pode agora alterar os números de série para um novo registo.', 'success');
+            }
+        }
+
+        function getFormData() {
+            const formData = {};
+            const form = document.getElementById('interventionForm');
+            const formElements = form.elements;
+            
+            // Coletar números de série
+            const serialNumbers = [];
+            const serialEntries = document.querySelectorAll('.serial-number-entry');
+            serialEntries.forEach(entry => {
+                const type = entry.querySelector('select').value;
+                const number = entry.querySelector('input').value;
+                if (number) {
+                    serialNumbers.push(`${type}: ${number}`);
+                }
+            });
+            
+            formData.numerosSerie = serialNumbers;
+            
+            for (let i = 0; i < formElements.length; i++) {
+                const element = formElements[i];
+                if (element.name && element.type !== 'button') {
+                    if (element.type === 'checkbox') {
+                        if (!formData[element.name]) {
+                            formData[element.name] = [];
+                        }
+                        if (element.checked) {
+                            formData[element.name].push(element.value);
+                        }
+                    } else if (element.type === 'select-multiple') {
+                        formData[element.name] = Array.from(element.selectedOptions).map(opt => opt.value);
+                    } else {
+                        formData[element.name] = element.value;
+                    }
+                }
+            }
+            
+            return formData;
+        }
+
+        function validateForm() {
+            const requiredFields = document.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value) {
+                    isValid = false;
+                    field.style.borderColor = 'red';
+                } else {
+                    field.style.borderColor = '#ddd';
+                }
+            });
+            
+            // Validação especial para marca
+            const brandSelect = document.getElementById('brand');
+            const otherBrandInput = document.getElementById('otherBrand');
+            
+            if (brandSelect.value === 'outra' && !otherBrandInput.value) {
+                isValid = false;
+                otherBrandInput.style.borderColor = 'red';
+                showNotification('Por favor, especifique a marca do equipamento.', 'warning');
+            } else {
+                otherBrandInput.style.borderColor = '#ddd';
+            }
+            
+            // Validação de pelo menos um tipo de intervenção selecionado
+            const interventionCheckboxes = document.querySelectorAll('input[name="interventionType"]');
+            let interventionSelected = false;
+            
+            interventionCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    interventionSelected = true;
+                }
+            });
+            
+            if (!interventionSelected) {
+                showNotification('Selecione pelo menos um tipo de intervenção', 'warning');
+                isValid = false;
+            }
+            
+            if (!isValid) {
+                showNotification('Por favor, preencha todos os campos obrigatórios.', 'error');
+            }
+            
+            return isValid;
+        }
 
         // ===== FUNÇÕES PRINCIPAIS ATUALIZADAS =====
         async function submitForm(event) {
@@ -1535,6 +2226,524 @@
             }
         }
 
+        function createRegistoFromFormData(formData, id = null) {
+            // Determinar marca final
+            let marcaFinal = formData.brand;
+            if (formData.brand === 'outra' && formData.otherBrand) {
+                marcaFinal = formData.otherBrand;
+            }
+            
+            // Determinar intervenções
+            let intervencoes = [];
+            if (formData.interventionType && Array.isArray(formData.interventionType)) {
+                intervencoes = formData.interventionType;
+                if (formData.interventionType.includes('outra') && formData.otherIntervention) {
+                    intervencoes = intervencoes.filter(i => i !== 'outra');
+                    intervencoes.push(formData.otherIntervention);
+                }
+            }
+            
+            return {
+                id: id,
+                data: formData.interventionDate,
+                cliente: formData.clientName,
+                tecnico: 'Marco Pinheiro',
+                equipamento: formData.installationType,
+                marca: marcaFinal,
+                modelo: formData.model,
+                numerosSerie: formData.numerosSerie,
+                estado: 'pendente',
+                potenciaEletrica: parseFloat(formData.electricPower) || 0,
+                potenciaCalor: parseFloat(formData.heatPower) || 0,
+                potenciaFrio: parseFloat(formData.coldPower) || 0,
+                fluido: formData.existingFluid || '',
+                intervencoes: intervencoes
+            };
+        }
+
+        // ===== FUNÇÕES DE UI =====
+        function updateUI() {
+            updateStats();
+            renderRegistosTable();
+            renderRecentRegistos();
+        }
+
+        function updateStats() {
+            const total = registos.length;
+            const pendentes = registos.filter(r => r.estado === 'pendente').length;
+            const validados = registos.filter(r => r.estado === 'validado').length;
+            
+            document.getElementById('totalRegistos').textContent = total;
+            document.getElementById('pendentesValidacao').textContent = pendentes;
+            document.getElementById('registosValidados').textContent = validados;
+        }
+
+        function renderRegistosTable() {
+            const tbody = document.getElementById('registrosTableBody');
+            tbody.innerHTML = '';
+            
+            const filteredRegistos = applyFiltersToData();
+            const paginatedRegistos = paginateData(filteredRegistos);
+            
+            if (paginatedRegistos.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 30px;">
+                            Nenhum registo encontrado com os filtros aplicados.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            paginatedRegistos.forEach(registo => {
+                const row = document.createElement('tr');
+                
+                let statusClass = '';
+                let statusText = '';
+                
+                switch(registo.estado) {
+                    case 'pendente':
+                        statusClass = 'status-pendente';
+                        statusText = 'Pendente';
+                        break;
+                    case 'validado':
+                        statusClass = 'status-validado';
+                        statusText = 'Validado';
+                        break;
+                    case 'aprovado':
+                        statusClass = 'status-aprovado';
+                        statusText = 'Aprovado';
+                        break;
+                }
+                
+                row.innerHTML = `
+                    <td>${formatDate(registo.data)}</td>
+                    <td>${registo.cliente}</td>
+                    <td>${registo.tecnico}</td>
+                    <td>${registo.marca} ${registo.modelo}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td class="action-buttons">
+                        <button class="btn btn-primary ver-btn" data-id="${registo.id}" title="Ver detalhes">👁</button>
+                        ${registo.estado === 'pendente' ? 
+                          `<button class="btn btn-success validar-btn" data-id="${registo.id}" title="Validar">✓</button>` : 
+                          ''}
+                        <button class="btn btn-warning editar-btn" data-id="${registo.id}" title="Editar">✎</button>
+                        <button class="btn btn-danger eliminar-btn" data-id="${registo.id}" title="Eliminar">🗑</button>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // Configurar event listeners para os botões da tabela
+            document.querySelectorAll('.ver-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    verDetalhes(id);
+                });
+            });
+            
+            document.querySelectorAll('.validar-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    abrirValidacao(id);
+                });
+            });
+            
+            document.querySelectorAll('.editar-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    editarRegisto(id);
+                });
+            });
+            
+            document.querySelectorAll('.eliminar-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    abrirEliminacao(id);
+                });
+            });
+            
+            renderPagination(filteredRegistos.length);
+        }
+
+        function applyFiltersToData() {
+            const statusFilter = document.getElementById('filterStatus').value;
+            const searchFilter = document.getElementById('searchInput').value.toLowerCase();
+            
+            return registos.filter(registo => {
+                const matchesStatus = !statusFilter || registo.estado === statusFilter;
+                const matchesSearch = !searchFilter || 
+                    registo.cliente.toLowerCase().includes(searchFilter) ||
+                    registo.equipamento.toLowerCase().includes(searchFilter) ||
+                    registo.marca.toLowerCase().includes(searchFilter);
+                
+                return matchesStatus && matchesSearch;
+            });
+        }
+
+        function applyFilters() {
+            currentPage = 1;
+            renderRegistosTable();
+        }
+
+        function clearFilters() {
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('searchInput').value = '';
+            currentPage = 1;
+            renderRegistosTable();
+        }
+
+        function paginateData(data) {
+            const startIndex = (currentPage - 1) * recordsPerPage;
+            return data.slice(startIndex, startIndex + recordsPerPage);
+        }
+
+        function renderPagination(totalRecords) {
+            const totalPages = Math.ceil(totalRecords / recordsPerPage);
+            const paginationContainer = document.getElementById('pagination');
+            paginationContainer.innerHTML = '';
+            
+            if (totalPages <= 1) return;
+            
+            // Botão anterior
+            const prevButton = document.createElement('button');
+            prevButton.textContent = '«';
+            prevButton.disabled = currentPage === 1;
+            prevButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderRegistosTable();
+                }
+            });
+            paginationContainer.appendChild(prevButton);
+            
+            // Números de página
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.className = currentPage === i ? 'active' : '';
+                pageButton.addEventListener('click', () => {
+                    currentPage = i;
+                    renderRegistosTable();
+                });
+                paginationContainer.appendChild(pageButton);
+            }
+            
+            // Botão seguinte
+            const nextButton = document.createElement('button');
+            nextButton.textContent = '»';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderRegistosTable();
+                }
+            });
+            paginationContainer.appendChild(nextButton);
+        }
+
+        function renderRecentRegistos() {
+            const container = document.getElementById('recentRegistos');
+            const recentes = registos.slice(0, 5);
+            
+            if (recentes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>Nenhum registo encontrado.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <table class="registros-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Cliente</th>
+                            <th>Equipamento</th>
+                            <th>Estado</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            recentes.forEach(registo => {
+                let statusClass = '';
+                let statusText = '';
+                
+                switch(registo.estado) {
+                    case 'pendente':
+                        statusClass = 'status-pendente';
+                        statusText = 'Pendente';
+                        break;
+                    case 'validado':
+                        statusClass = 'status-validado';
+                        statusText = 'Validado';
+                        break;
+                    case 'aprovado':
+                        statusClass = 'status-aprovado';
+                        statusText = 'Aprovado';
+                        break;
+                }
+                
+                html += `
+                    <tr>
+                        <td>${formatDate(registo.data)}</td>
+                        <td>${registo.cliente}</td>
+                        <td>${registo.marca} ${registo.modelo}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td class="action-buttons">
+                            <button class="btn btn-primary recent-ver-btn" data-id="${registo.id}" title="Ver detalhes">👁</button>
+                            ${registo.estado === 'pendente' ? 
+                              `<button class="btn btn-success recent-validar-btn" data-id="${registo.id}" title="Validar">✓</button>` : 
+                              ''}
+                            <button class="btn btn-warning recent-editar-btn" data-id="${registo.id}" title="Editar">✎</button>
+                            <button class="btn btn-danger recent-eliminar-btn" data-id="${registo.id}" title="Eliminar">🗑</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = html;
+            
+            // Configurar event listeners para os botões dos registos recentes
+            document.querySelectorAll('.recent-ver-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    verDetalhes(id);
+                });
+            });
+            
+            document.querySelectorAll('.recent-validar-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    abrirValidacao(id);
+                });
+            });
+            
+            document.querySelectorAll('.recent-editar-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    editarRegisto(id);
+                });
+            });
+            
+            document.querySelectorAll('.recent-eliminar-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    abrirEliminacao(id);
+                });
+            });
+        }
+
+        function formatDate(dateString) {
+            const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+            return new Date(dateString).toLocaleDateString('pt-PT', options);
+        }
+
+        // ===== FUNÇÕES DE EDIÇÃO =====
+        function editarRegisto(id) {
+            const registo = registos.find(r => r.id === id);
+            if (!registo) return;
+            
+            // Preencher formulário com dados do registo
+            document.getElementById('editRegistoId').value = registo.id;
+            document.getElementById('interventionDate').value = registo.data;
+            document.getElementById('clientName').value = registo.cliente;
+            document.getElementById('equipmentOwner').value = registo.cliente;
+            document.getElementById('equipmentLocation').value = 'Localização preenchida';
+            document.getElementById('locality').value = 'Localidade preenchida';
+            document.getElementById('postalCode').value = '0000-000';
+            
+            // Marca
+            const brandSelect = document.getElementById('brand');
+            const isOtherBrand = !['GREE', 'Daikin', 'Mitsubishi', 'LG', 'Samsung', 'Fujitsu', 'Panasonic', 'Carrier', 'Trane'].includes(registo.marca);
+            
+            if (isOtherBrand) {
+                brandSelect.value = 'outra';
+                document.getElementById('otherBrand').value = registo.marca;
+                document.getElementById('otherBrand').style.display = 'block';
+            } else {
+                brandSelect.value = registo.marca;
+            }
+            
+            document.getElementById('model').value = registo.modelo;
+            document.getElementById('manufactureYear').value = '2020';
+            document.getElementById('electricPower').value = registo.potenciaEletrica;
+            document.getElementById('heatPower').value = registo.potenciaCalor;
+            document.getElementById('coldPower').value = registo.potenciaFrio;
+            document.getElementById('installationType').value = registo.equipamento;
+            document.getElementById('hermeticSystem').value = 'sim';
+            document.getElementById('existingFluid').value = registo.fluido;
+            
+            // Números de série
+            const serialContainer = document.getElementById('serialNumbersContainer');
+            serialContainer.innerHTML = '';
+            
+            registo.numerosSerie.forEach((serial, index) => {
+                const [type, number] = serial.split(': ');
+                const newEntry = document.createElement('div');
+                newEntry.className = 'serial-number-entry';
+                newEntry.innerHTML = `
+                    <select name="serialType[]">
+                        <option value="UI" ${type === 'UI' ? 'selected' : ''}>UI - Unidade Interior</option>
+                        <option value="UE" ${type === 'UE' ? 'selected' : ''}>UE - Unidade Exterior</option>
+                    </select>
+                    <input type="text" name="serialNumber[]" value="${number}" placeholder="Número de série" required>
+                    <button type="button" class="remove-serial-btn">×</button>
+                `;
+                serialContainer.appendChild(newEntry);
+            });
+            
+            // Configurar listeners para os novos botões
+            setupSerialNumberListeners();
+            
+            // Intervenções
+            document.querySelectorAll('input[name="interventionType"]').forEach(cb => {
+                cb.checked = registo.intervencoes.includes(cb.value);
+            });
+            
+            // Configurar modo de edição
+            isEditMode = true;
+            document.getElementById('editModeBanner').style.display = 'block';
+            document.getElementById('formTitle').textContent = `Editar Registo #${registo.id}`;
+            document.getElementById('submitButton').textContent = 'Atualizar Registo';
+            document.getElementById('cancelEditButton').style.display = 'inline-block';
+            
+            // Ir para o formulário
+            openTab('novoRegisto');
+        }
+
+        function cancelEdit() {
+            if (confirm('Tem a certeza que pretende cancelar a edição? As alterações não serão guardadas.')) {
+                resetForm();
+                openTab('registos');
+            }
+        }
+
+        function verDetalhes(id) {
+            const registo = registos.find(r => r.id === id);
+            if (!registo) return;
+            
+            const content = document.getElementById('detalhesRegistoContent');
+            
+            let statusClass = '';
+            let statusText = '';
+            
+            switch(registo.estado) {
+                case 'pendente':
+                    statusClass = 'status-pendente';
+                    statusText = 'Pendente';
+                    break;
+                case 'validado':
+                    statusClass = 'status-validado';
+                    statusText = 'Validado';
+                    break;
+                case 'aprovado':
+                    statusClass = 'status-aprovado';
+                    statusText = 'Aprovado';
+                    break;
+            }
+            
+            content.innerHTML = `
+                <div class="form-group">
+                    <label>Data da Intervenção</label>
+                    <p><strong>${formatDate(registo.data)}</strong></p>
+                </div>
+                
+                <div class="form-group">
+                    <label>Cliente</label>
+                    <p><strong>${registo.cliente}</strong></p>
+                </div>
+                
+                <div class="form-group">
+                    <label>Técnico</label>
+                    <p><strong>${registo.tecnico}</strong></p>
+                </div>
+                
+                <div class="form-group">
+                    <label>Equipamento</label>
+                    <p><strong>${registo.equipamento}</strong></p>
+                </div>
+                
+                <div class="form-group">
+                    <label>Marca e Modelo</label>
+                    <p><strong>${registo.marca} ${registo.modelo}</strong></p>
+                </div>
+                
+                <div class="form-group">
+                    <label>Números de Série</label>
+                    <p><strong>${registo.numerosSerie.join(', ')}</strong></p>
+                </div>
+                
+                <div class="form-group">
+                    <label>Potências</label>
+                    <p><strong>Elétrica: ${registo.potenciaEletrica} kW | Calor: ${registo.potenciaCalor} kW | Frio: ${registo.potenciaFrio} kW</strong></p>
+                </div>
+                
+                <div class="form-group">
+                    <label>Fluido</label>
+                    <p><strong>${registo.fluido}</strong></p>
+                </div>
+                
+                <div class="form-group">
+                    <label>Intervenções Realizadas</label>
+                    <p><strong>${registo.intervencoes.join(', ')}</strong></p>
+                </div>
+                
+                <div class="form-group">
+                    <label>Estado</label>
+                    <p><span class="status-badge ${statusClass}">${statusText}</span></p>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    ${registo.estado === 'pendente' ? 
+                      `<button class="btn btn-success" id="validarFromDetails" title="Validar">✓</button>` : 
+                      ''}
+                    <button class="btn btn-warning" id="editarFromDetails" title="Editar">✎</button>
+                    <button class="btn btn-danger" id="eliminarFromDetails" title="Eliminar">🗑</button>
+                    <button class="btn" onclick="closeModal('detalhesRegistoModal')">Fechar</button>
+                </div>
+            `;
+            
+            // Configurar listeners para os botões dentro do modal
+            document.getElementById('validarFromDetails')?.addEventListener('click', function() {
+                closeModal('detalhesRegistoModal');
+                abrirValidacao(registo.id);
+            });
+            
+            document.getElementById('editarFromDetails')?.addEventListener('click', function() {
+                closeModal('detalhesRegistoModal');
+                editarRegisto(registo.id);
+            });
+            
+            document.getElementById('eliminarFromDetails')?.addEventListener('click', function() {
+                closeModal('detalhesRegistoModal');
+                abrirEliminacao(registo.id);
+            });
+            
+            openModal('detalhesRegistoModal');
+        }
+
+        function abrirValidacao(id) {
+            currentRegistoId = id;
+            openModal('validacaoModal');
+        }
+
+        function abrirEliminacao(id) {
+            currentRegistoId = id;
+            openModal('eliminarRegistoModal');
+        }
+
         async function validarRegisto() {
             if (!currentRegistoId) return;
             
@@ -1566,14 +2775,14 @@
             currentRegistoId = null;
         }
 
-        // ===== FUNÇÕES DE UI =====
-        function updateUI() {
-            updateStats();
-            renderRegistosTable();
-            renderRecentRegistos();
+        // ===== FUNÇÕES PARA MODAIS =====
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
         }
 
-        // ... [Continue com todas as outras funções do seu código original]
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
 
         // ===== PWA FUNCTIONALITY =====
         let deferredPrompt;
@@ -1637,17 +2846,6 @@
                 notification.classList.remove('show');
             }, 4000);
         }
-
-        function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'flex';
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        // ... [Adicione aqui todas as outras funções do seu código original]
-
     </script>
 </body>
 </html>
