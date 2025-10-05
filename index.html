@@ -613,7 +613,7 @@
             background-color: #e74c3c;
         }
         
-        /* Estilos para OCR - SIMPLIFICADOS */
+        /* Estilos para OCR - MULTIPLAS FOTOS */
         .ocr-container {
             background: #f8f9fa;
             border: 2px dashed #dee2e6;
@@ -687,6 +687,116 @@
             padding: 15px 25px;
             font-size: 1.1rem;
             min-width: 180px;
+        }
+        
+        /* Novos estilos para múltiplas fotos */
+        .multiple-photos-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .photo-thumbnail {
+            position: relative;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .photo-thumbnail:hover {
+            border-color: #3498db;
+            transform: scale(1.05);
+        }
+        
+        .photo-thumbnail img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+        
+        .photo-thumbnail.active {
+            border-color: #27ae60;
+            border-width: 3px;
+        }
+        
+        .remove-photo {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .photo-count {
+            background: #3498db;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+        
+        .ocr-gallery {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .extracted-data-summary {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .data-field {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .data-field:last-child {
+            border-bottom: none;
+        }
+        
+        .field-source {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        .confidence-badge {
+            background: #f39c12;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            margin-left: 8px;
+        }
+        
+        .barcode-hint {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 0.9rem;
         }
         
         @media (max-width: 768px) {
@@ -763,6 +873,10 @@
                 width: 100%;
                 margin: 10px 0;
             }
+            
+            .multiple-photos-container {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
         }
         
         @media (max-width: 480px) {
@@ -783,6 +897,10 @@
             .sync-buttons {
                 flex-wrap: wrap;
                 justify-content: center;
+            }
+            
+            .multiple-photos-container {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             }
         }
     </style>
@@ -894,13 +1012,29 @@
                 
                 <h2 id="formTitle">Novo Registo de Intervenção</h2>
                 
-                <!-- Seção OCR SIMPLIFICADA -->
+                <!-- Seção OCR MELHORADA COM MULTIPLAS FOTOS -->
                 <div class="form-section">
-                    <h2>📸 SCAN AUTOMÁTICO DA ETIQUETA</h2>
+                    <h2>📸 SCAN AUTOMÁTICO DE ETIQUETAS <span id="photoCount" class="photo-count" style="display: none;">0 fotos</span></h2>
                     <div class="ocr-container">
                         <p style="font-size: 1.1rem; margin-bottom: 20px;">
-                            <strong>Capture uma foto da etiqueta para preenchimento automático</strong>
+                            <strong>Capture fotos das etiquetas para preenchimento automático</strong>
                         </p>
+                        
+                        <div class="barcode-hint">
+                            💡 <strong>Dica:</strong> O número de série está normalmente <strong>abaixo do código de barras</strong>. 
+                            Fotografe essa área com boa iluminação.
+                        </div>
+                        
+                        <!-- Galeria de Fotos -->
+                        <div class="ocr-gallery">
+                            <h4>📁 Fotos Capturadas</h4>
+                            <div class="multiple-photos-container" id="photosContainer">
+                                <!-- Fotos serão adicionadas aqui -->
+                            </div>
+                            <p id="noPhotosMessage" style="text-align: center; color: #7f8c8d; font-style: italic;">
+                                Nenhuma foto adicionada ainda
+                            </p>
+                        </div>
                         
                         <!-- Container da Câmara -->
                         <div class="camera-view" id="cameraContainer">
@@ -909,40 +1043,45 @@
                                 <button class="btn btn-success" onclick="captureImage()">
                                     📷 Capturar Foto
                                 </button>
+                                <button class="btn btn-warning" onclick="captureAndContinue()">
+                                    📸 Capturar e Continuar
+                                </button>
                                 <button class="btn btn-danger" onclick="stopCamera()">
-                                    ❌ Cancelar
+                                    ❌ Terminar
                                 </button>
                             </div>
                         </div>
                         
-                        <!-- Botões Principais - SEMPRE VISÍVEIS -->
+                        <!-- Botões Principais -->
                         <div class="ocr-buttons" id="cameraButtons">
                             <button class="btn btn-success" onclick="startCamera()">
                                 📷 Usar Câmara
                             </button>
                             <div class="file-input-wrapper">
                                 <button class="btn btn-primary">
-                                    📁 Carregar Foto
+                                    📁 Carregar Fotos
                                 </button>
-                                <input type="file" id="imageUpload" accept="image/*" capture="environment" onchange="handleImageUpload(event)">
+                                <input type="file" id="imageUpload" accept="image/*" multiple onchange="handleMultipleImageUpload(event)">
                             </div>
+                            <button class="btn btn-warning" onclick="processAllPhotos()" id="processAllBtn" style="display: none;">
+                                🔍 Processar Todas as Fotos
+                            </button>
                         </div>
-                        
-                        <!-- Pré-visualização -->
-                        <img id="ocrPreview" class="ocr-preview" alt="Pré-visualização">
                         
                         <!-- Loading -->
                         <div class="ocr-loading" id="ocrLoading">
                             <div class="spinner"></div>
-                            <p>A processar imagem e extrair dados...</p>
+                            <p id="loadingText">A processar imagem e extrair dados...</p>
                         </div>
                         
-                        <!-- Resultados -->
-                        <div id="ocrResults" class="ocr-results">
-                            <h4>📋 Dados Extraídos da Etiqueta:</h4>
-                            <div id="extractedData"></div>
-                            <button class="btn btn-success" onclick="applyExtractedData()" style="margin-top: 15px;">
-                                ✅ Aplicar Dados ao Formulário
+                        <!-- Resumo de Dados Extraídos -->
+                        <div id="extractedDataSummary" class="extracted-data-summary" style="display: none;">
+                            <h4>📋 Dados Extraídos das Etiquetas:</h4>
+                            <div id="summaryContent">
+                                <!-- Conteúdo do resumo -->
+                            </div>
+                            <button class="btn btn-success" onclick="applyAllExtractedData()" style="margin-top: 15px;">
+                                ✅ Aplicar Todos os Dados ao Formulário
                             </button>
                         </div>
                     </div>
@@ -1334,8 +1473,12 @@
         const recordsPerPage = 10;
         let isEditMode = false;
         let githubConfig = null;
+        
+        // ===== VARIÁVEIS PARA MULTIPLAS FOTOS =====
+        let allPhotos = [];
         let currentStream = null;
         let extractedData = {};
+        let isProcessing = false;
 
         // ===== INICIALIZAÇÃO =====
         document.addEventListener('DOMContentLoaded', function() {
@@ -1361,10 +1504,9 @@
             }
         }
 
-        // ===== FUNÇÕES OCR =====
+        // ===== FUNÇÕES OCR MELHORADAS =====
         async function startCamera() {
             try {
-                // Parar câmara anterior se existir
                 if (currentStream) {
                     stopCamera();
                 }
@@ -1381,22 +1523,14 @@
                 currentStream = stream;
                 video.srcObject = stream;
                 
-                // Mostrar câmara e ocultar botões
                 document.getElementById('cameraContainer').style.display = 'block';
                 document.getElementById('cameraButtons').style.display = 'none';
                 
-                showNotification('Câmara ativada. Aponte para a etiqueta e clique em Capturar Foto.', 'success');
+                showNotification('Câmara ativada. Aponte para o número de série abaixo do código de barras.', 'success');
                 
             } catch (error) {
                 console.error('Erro ao aceder à câmara:', error);
-                
-                if (error.name === 'NotAllowedError') {
-                    showNotification('Permissão da câmara negada. Por favor, permita o acesso à câmara.', 'error');
-                } else if (error.name === 'NotFoundError') {
-                    showNotification('Nenhuma câmara encontrada no dispositivo.', 'error');
-                } else {
-                    showNotification('Erro ao aceder à câmara: ' + error.message, 'error');
-                }
+                showNotification('Erro ao aceder à câmara: ' + error.message, 'error');
             }
         }
 
@@ -1406,16 +1540,22 @@
                 currentStream = null;
             }
             
-            // Ocultar câmara e mostrar botões
             document.getElementById('cameraContainer').style.display = 'none';
             document.getElementById('cameraButtons').style.display = 'block';
             
-            // Limpar o elemento de vídeo
             const video = document.getElementById('cameraVideo');
             video.srcObject = null;
         }
 
         function captureImage() {
+            capturePhoto(false);
+        }
+
+        function captureAndContinue() {
+            capturePhoto(true);
+        }
+
+        function capturePhoto(continueShooting) {
             const video = document.getElementById('cameraVideo');
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
@@ -1425,173 +1565,326 @@
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             
             canvas.toBlob(function(blob) {
-                processImage(blob);
+                addPhotoToGallery(blob);
+                if (!continueShooting) {
+                    stopCamera();
+                }
             }, 'image/jpeg', 0.8);
-            
-            stopCamera();
         }
 
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                processImage(file);
-            }
-            // Reset do input para permitir reutilização
+        function handleMultipleImageUpload(event) {
+            const files = Array.from(event.target.files);
+            files.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    addPhotoToGallery(file);
+                }
+            });
             event.target.value = '';
         }
 
-        async function processImage(imageBlob) {
-            const preview = document.getElementById('ocrPreview');
-            const loading = document.getElementById('ocrLoading');
-            const results = document.getElementById('ocrResults');
+        function addPhotoToGallery(imageBlob) {
+            const photoId = 'photo_' + Date.now();
+            const photoObject = {
+                id: photoId,
+                blob: imageBlob,
+                processed: false,
+                data: {}
+            };
             
-            // Mostrar pré-visualização
-            preview.src = URL.createObjectURL(imageBlob);
-            preview.style.display = 'block';
+            allPhotos.push(photoObject);
+            updatePhotoGallery();
+            showNotification('Foto adicionada com sucesso!', 'success');
+        }
+
+        function updatePhotoGallery() {
+            const container = document.getElementById('photosContainer');
+            const noPhotosMessage = document.getElementById('noPhotosMessage');
+            const processAllBtn = document.getElementById('processAllBtn');
+            const photoCount = document.getElementById('photoCount');
             
-            // Mostrar loading e ocultar resultados anteriores
-            loading.style.display = 'block';
-            results.style.display = 'none';
+            if (allPhotos.length === 0) {
+                container.innerHTML = '';
+                noPhotosMessage.style.display = 'block';
+                processAllBtn.style.display = 'none';
+                photoCount.style.display = 'none';
+                return;
+            }
+            
+            noPhotosMessage.style.display = 'none';
+            processAllBtn.style.display = 'block';
+            photoCount.textContent = allPhotos.length + ' foto' + (allPhotos.length > 1 ? 's' : '');
+            photoCount.style.display = 'inline-block';
+            
+            container.innerHTML = allPhotos.map(photo => `
+                <div class="photo-thumbnail ${photo.processed ? 'active' : ''}" onclick="processSinglePhoto('${photo.id}')">
+                    <img src="${URL.createObjectURL(photo.blob)}" alt="Foto da etiqueta">
+                    <button class="remove-photo" onclick="removePhoto('${photo.id}', event)">×</button>
+                    ${photo.processed ? '<div style="position: absolute; bottom: 5px; left: 5px; background: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem;">✓</div>' : ''}
+                </div>
+            `).join('');
+        }
+
+        function removePhoto(photoId, event) {
+            event.stopPropagation();
+            allPhotos = allPhotos.filter(photo => photo.id !== photoId);
+            updatePhotoGallery();
+        }
+
+        async function processAllPhotos() {
+            if (isProcessing) {
+                showNotification('Já está a processar fotos...', 'warning');
+                return;
+            }
+            
+            const unprocessedPhotos = allPhotos.filter(photo => !photo.processed);
+            if (unprocessedPhotos.length === 0) {
+                showNotification('Todas as fotos já foram processadas!', 'info');
+                return;
+            }
+            
+            isProcessing = true;
+            document.getElementById('ocrLoading').style.display = 'block';
+            document.getElementById('loadingText').textContent = `A processar ${unprocessedPhotos.length} foto(s)...`;
             
             try {
-                showNotification('A processar imagem...', 'warning');
+                for (const photo of unprocessedPhotos) {
+                    await processSinglePhotoInternal(photo);
+                }
                 
-                // Usar Tesseract.js para OCR
-                const { data: { text } } = await Tesseract.recognize(
-                    imageBlob,
-                    'por+eng', // Português e Inglês
-                    { 
-                        logger: m => console.log(m) 
-                    }
-                );
-                
-                console.log('Texto extraído:', text);
-                extractEquipmentData(text);
+                showNotification(`Processadas ${unprocessedPhotos.length} fotos com sucesso!`, 'success');
+                updateExtractedDataSummary();
                 
             } catch (error) {
-                console.error('Erro no OCR:', error);
-                showNotification('Erro ao processar a imagem. Tente novamente.', 'error');
+                console.error('Erro no processamento:', error);
+                showNotification('Erro no processamento de algumas fotos', 'error');
             } finally {
-                loading.style.display = 'none';
+                isProcessing = false;
+                document.getElementById('ocrLoading').style.display = 'none';
+                updatePhotoGallery();
             }
         }
 
-        function extractEquipmentData(text) {
-            extractedData = {};
+        async function processSinglePhoto(photoId) {
+            const photo = allPhotos.find(p => p.id === photoId);
+            if (!photo) return;
+            
+            if (photo.processed) {
+                showNotification('Esta foto já foi processada', 'info');
+                return;
+            }
+            
+            document.getElementById('ocrLoading').style.display = 'block';
+            document.getElementById('loadingText').textContent = 'A processar foto...';
+            
+            try {
+                await processSinglePhotoInternal(photo);
+                showNotification('Foto processada com sucesso!', 'success');
+                updateExtractedDataSummary();
+            } catch (error) {
+                console.error('Erro no processamento:', error);
+                showNotification('Erro ao processar a foto', 'error');
+            } finally {
+                document.getElementById('ocrLoading').style.display = 'none';
+                updatePhotoGallery();
+            }
+        }
+
+        async function processSinglePhotoInternal(photo) {
+            const { data: { text, confidence } } = await Tesseract.recognize(
+                photo.blob,
+                'por+eng',
+                { 
+                    logger: m => console.log(m)
+                }
+            );
+            
+            console.log('Texto extraído da foto:', text);
+            const extracted = extractEquipmentDataFromText(text);
+            extracted.confidence = confidence;
+            extracted.sourcePhoto = photo.id;
+            
+            photo.data = extracted;
+            photo.processed = true;
+            
+            // Combinar dados com os já existentes
+            mergeExtractedData(extracted);
+        }
+
+        function extractEquipmentDataFromText(text) {
+            const result = {};
             const lines = text.split('\n').map(line => line.trim()).filter(line => line);
             
-            // Procurar marca
-            const marcas = ['GREE', 'DAIKIN', 'MITSUBISHI', 'LG', 'SAMSUNG', 'FUJITSU', 'PANASONIC', 'CARRIER', 'TRANE'];
-            for (const marca of marcas) {
-                if (text.toUpperCase().includes(marca)) {
-                    extractedData.marca = marca;
-                    break;
-                }
-            }
-            
-            // Procurar modelo
-            const modelPatterns = [
-                /Model[o]?[\s:]*([^\n]+)/i,
-                /Modelo[\s:]*([^\n]+)/i,
-                /MODEL[\s:]*([^\n]+)/i
-            ];
-            
-            for (const pattern of modelPatterns) {
-                const match = text.match(pattern);
-                if (match) {
-                    extractedData.modelo = match[1].trim();
-                    break;
-                }
-            }
-            
-            // Procurar número de série
+            // MELHOR DETECÇÃO DE NÚMERO DE SÉRIE - Procura padrões comuns
             const serialPatterns = [
-                /Serial No\.?[\s:]*([^\n]+)/i,
-                /N[º°]?[\s]*S[ée]rie[\s:]*([^\n]+)/i,
-                /SERIAL[\s:]*([^\n]+)/i,
-                /N[º°]?[\s]*SERIAL[\s:]*([^\n]+)/i
+                /Serial No\.?[\s:]*([A-Z0-9\-]{5,})/i,
+                /N[º°]?[\s]*S[ée]rie[\s:]*([A-Z0-9\-]{5,})/i,
+                /SERIAL[\s:]*([A-Z0-9\-]{5,})/i,
+                /N[º°]?[\s]*SERIAL[\s:]*([A-Z0-9\-]{5,})/i,
+                /SN[\s:]*([A-Z0-9\-]{5,})/i,
+                /([A-Z]{2,3}[0-9]{8,})/, // Padrão comum: letras + números
+                /([0-9]{3}[A-Z]{2}[0-9]{5})/, // Outro padrão comum
+                /([A-Z0-9]{10,})/ // Qualquer combinação longa de letras e números
             ];
             
             for (const pattern of serialPatterns) {
                 const match = text.match(pattern);
-                if (match) {
-                    extractedData.numeroSerie = match[1].trim();
+                if (match && match[1]) {
+                    result.numeroSerie = match[1].trim();
                     break;
                 }
             }
             
-            // Procurar potências
+            // Procurar marca - lista expandida
+            const marcas = [
+                'GREE', 'DAIKIN', 'MITSUBISHI', 'LG', 'SAMSUNG', 'FUJITSU', 
+                'PANASONIC', 'CARRIER', 'TRANE', 'TOSHIBA', 'HITACHI', 'WHIRLPOOL',
+                'ELECTROLUX', 'BOSCH', 'SIEMENS', 'ARISTON', 'BAUKNECHT', 'COMFEE'
+            ];
+            
+            for (const marca of marcas) {
+                if (text.toUpperCase().includes(marca)) {
+                    result.marca = marca;
+                    break;
+                }
+            }
+            
+            // Procurar modelo - padrões melhorados
+            const modelPatterns = [
+                /Model[o]?[\s:]*([A-Z0-9\-\.\+\/]{3,})/i,
+                /Modelo[\s:]*([A-Z0-9\-\.\+\/]{3,})/i,
+                /MODEL[\s:]*([A-Z0-9\-\.\+\/]{3,})/i,
+                /Type[\s:]*([A-Z0-9\-\.\+\/]{3,})/i,
+                /MODELO[\s:]*([A-Z0-9\-\.\+\/]{3,})/i
+            ];
+            
+            for (const pattern of modelPatterns) {
+                const match = text.match(pattern);
+                if (match && match[1]) {
+                    result.modelo = match[1].trim();
+                    break;
+                }
+            }
+            
+            // Procurar potências - padrões mais abrangentes
             const coolingPatterns = [
                 /Cooling Capacity[\s:]*([\d.,]+)\s*kW/i,
                 /Capacidade de Arrefecimento[\s:]*([\d.,]+)\s*kW/i,
                 /Potência Fria[\s:]*([\d.,]+)\s*kW/i,
-                /Cooling[\s:]*([\d.,]+)\s*kW/i
+                /Cooling[\s:]*([\d.,]+)\s*kW/i,
+                /Capacidade Frigorífica[\s:]*([\d.,]+)\s*kW/i
             ];
             
             const heatingPatterns = [
                 /Heating Capacity[\s:]*([\d.,]+)\s*kW/i,
                 /Capacidade de Aquecimento[\s:]*([\d.,]+)\s*kW/i,
                 /Potência Calor[\s:]*([\d.,]+)\s*kW/i,
-                /Heating[\s:]*([\d.,]+)\s*kW/i
+                /Heating[\s:]*([\d.,]+)\s*kW/i,
+                /Capacidade Térmica[\s:]*([\d.,]+)\s*kW/i
             ];
             
             for (const pattern of coolingPatterns) {
                 const match = text.match(pattern);
-                if (match) {
-                    extractedData.potenciaFrio = parseFloat(match[1].replace(',', '.'));
+                if (match && match[1]) {
+                    result.potenciaFrio = parseFloat(match[1].replace(',', '.'));
                     break;
                 }
             }
             
             for (const pattern of heatingPatterns) {
                 const match = text.match(pattern);
-                if (match) {
-                    extractedData.potenciaCalor = parseFloat(match[1].replace(',', '.'));
+                if (match && match[1]) {
+                    result.potenciaCalor = parseFloat(match[1].replace(',', '.'));
                     break;
                 }
             }
             
-            // Procurar ano de fabrico
-            const yearPattern = /(20\d{2})\.?\s*(0[1-9]|1[0-2])/;
-            const yearMatch = text.match(yearPattern);
-            if (yearMatch) {
-                extractedData.anoFabrico = yearMatch[1];
+            // Procurar ano de fabrico - padrões melhorados
+            const yearPatterns = [
+                /(20\d{2})\.?\s*(0[1-9]|1[0-2])/,
+                /Year[\s:]*(\d{4})/i,
+                /Ano[\s:]*(\d{4})/i,
+                /Fabrico[\s:]*(\d{4})/i,
+                /Manufacture[\s:]*(\d{4})/i
+            ];
+            
+            for (const pattern of yearPatterns) {
+                const match = text.match(pattern);
+                if (match && match[1]) {
+                    result.anoFabrico = match[1];
+                    break;
+                }
             }
             
             // Procurar tipo de fluido
-            if (text.toUpperCase().includes('R32') || text.includes('R-32')) {
-                extractedData.fluido = 'R-32';
-            } else if (text.toUpperCase().includes('R410') || text.includes('R-410')) {
-                extractedData.fluido = 'R-410A';
-            } else if (text.toUpperCase().includes('R22') || text.includes('R-22')) {
-                extractedData.fluido = 'R-22';
-            } else if (text.toUpperCase().includes('R134') || text.includes('R-134')) {
-                extractedData.fluido = 'R-134a';
+            const fluidPatterns = {
+                'R-32': /R32|R-32|HFC-32|R\s*32/i,
+                'R-410A': /R410|R-410|R410A|R-410A|Puron/i,
+                'R-22': /R22|R-22|HCFC-22|R\s*22/i,
+                'R-134a': /R134|R-134|R134a|R-134a|HFC-134a/i,
+                'R-407C': /R407|R-407|R407C|R-407C/i,
+                'R-404A': /R404|R-404|R404A|R-404A/i
+            };
+            
+            for (const [fluid, pattern] of Object.entries(fluidPatterns)) {
+                if (pattern.test(text)) {
+                    result.fluido = fluid;
+                    break;
+                }
             }
             
             // Procurar carga de refrigerante
-            const refrigerantPattern = /Refrigerant Charge[\s:]*([\d.,]+)\s*kg/i;
-            const refrigerantMatch = text.match(refrigerantPattern);
-            if (refrigerantMatch) {
-                extractedData.cargaRefrigerante = parseFloat(refrigerantMatch[1].replace(',', '.'));
+            const refrigerantPatterns = [
+                /Refrigerant Charge[\s:]*([\d.,]+)\s*kg/i,
+                /Carga de Refrigerante[\s:]*([\d.,]+)\s*kg/i,
+                /Gas Charge[\s:]*([\d.,]+)\s*kg/i,
+                /Charge[\s:]*([\d.,]+)\s*kg/i
+            ];
+            
+            for (const pattern of refrigerantPatterns) {
+                const match = text.match(pattern);
+                if (match && match[1]) {
+                    result.cargaRefrigerante = parseFloat(match[1].replace(',', '.'));
+                    break;
+                }
             }
             
-            displayExtractedData();
+            return result;
         }
 
-        function displayExtractedData() {
-            const resultsDiv = document.getElementById('extractedData');
-            let html = '<div style="font-size: 0.95rem; line-height: 1.5;">';
+        function mergeExtractedData(newData) {
+            // Combinar dados de múltiplas fotos
+            Object.keys(newData).forEach(key => {
+                if (newData[key] && !extractedData[key]) {
+                    extractedData[key] = {
+                        value: newData[key],
+                        confidence: newData.confidence,
+                        source: newData.sourcePhoto
+                    };
+                }
+            });
+        }
+
+        function updateExtractedDataSummary() {
+            const summaryDiv = document.getElementById('extractedDataSummary');
+            const summaryContent = document.getElementById('summaryContent');
+            
+            const processedPhotos = allPhotos.filter(photo => photo.processed);
+            if (processedPhotos.length === 0) {
+                summaryDiv.style.display = 'none';
+                return;
+            }
+            
+            let html = '<div style="font-size: 0.95rem;">';
             
             const fields = [
-                { key: 'marca', label: 'Marca' },
-                { key: 'modelo', label: 'Modelo' },
-                { key: 'numeroSerie', label: 'Nº Série' },
-                { key: 'potenciaFrio', label: 'Potência Frio', suffix: ' kW' },
-                { key: 'potenciaCalor', label: 'Potência Calor', suffix: ' kW' },
-                { key: 'anoFabrico', label: 'Ano Fabrico' },
-                { key: 'fluido', label: 'Fluido' },
-                { key: 'cargaRefrigerante', label: 'Carga Refrigerante', suffix: ' kg' }
+                { key: 'marca', label: 'Marca', emoji: '🏷️' },
+                { key: 'modelo', label: 'Modelo', emoji: '🔧' },
+                { key: 'numeroSerie', label: 'Nº Série', emoji: '📋' },
+                { key: 'potenciaFrio', label: 'Potência Frio', emoji: '❄️', suffix: ' kW' },
+                { key: 'potenciaCalor', label: 'Potência Calor', emoji: '🔥', suffix: ' kW' },
+                { key: 'anoFabrico', label: 'Ano Fabrico', emoji: '📅' },
+                { key: 'fluido', label: 'Fluido', emoji: '💧' },
+                { key: 'cargaRefrigerante', label: 'Carga Refrigerante', emoji: '⚖️', suffix: ' kg' }
             ];
             
             let foundData = false;
@@ -1599,30 +1892,40 @@
             fields.forEach(field => {
                 if (extractedData[field.key]) {
                     foundData = true;
-                    html += `<p><strong>${field.label}:</strong> ${extractedData[field.key]}${field.suffix || ''}</p>`;
+                    html += `
+                        <div class="data-field">
+                            <div>
+                                <strong>${field.emoji} ${field.label}:</strong> 
+                                ${extractedData[field.key].value}${field.suffix || ''}
+                                <span class="confidence-badge">${Math.round(extractedData[field.key].confidence)}%</span>
+                            </div>
+                            <span class="field-source">Foto ${allPhotos.findIndex(p => p.id === extractedData[field.key].source) + 1}</span>
+                        </div>
+                    `;
                 }
             });
             
             if (!foundData) {
-                html += '<p style="color: #e74c3c; font-style: italic;">Não foi possível extrair dados da etiqueta. Tente uma foto mais nítida e bem iluminada.</p>';
+                html += '<p style="color: #e74c3c; font-style: italic;">Não foi possível extrair dados das etiquetas. Tente fotos mais nítidas.</p>';
             } else {
-                showNotification('Dados extraídos com sucesso!', 'success');
+                html += `<p style="margin-top: 10px; font-size: 0.8rem; color: #7f8c8d;">
+                    ✅ Dados combinados de ${processedPhotos.length} foto(s) processada(s)
+                </p>`;
             }
             
             html += '</div>';
-            resultsDiv.innerHTML = html;
-            
-            document.getElementById('ocrResults').style.display = 'block';
+            summaryContent.innerHTML = html;
+            summaryDiv.style.display = 'block';
         }
 
-        function applyExtractedData() {
+        function applyAllExtractedData() {
             let appliedCount = 0;
 
             // Aplicar marca
             if (extractedData.marca) {
                 const brandSelect = document.getElementById('brand');
                 const option = Array.from(brandSelect.options).find(opt => 
-                    opt.value.toUpperCase() === extractedData.marca.toUpperCase()
+                    opt.value.toUpperCase() === extractedData.marca.value.toUpperCase()
                 );
                 
                 if (option) {
@@ -1630,7 +1933,7 @@
                     appliedCount++;
                 } else {
                     brandSelect.value = 'outra';
-                    document.getElementById('otherBrand').value = extractedData.marca;
+                    document.getElementById('otherBrand').value = extractedData.marca.value;
                     document.getElementById('otherBrand').style.display = 'block';
                     appliedCount++;
                 }
@@ -1638,56 +1941,54 @@
             
             // Aplicar modelo
             if (extractedData.modelo) {
-                document.getElementById('model').value = extractedData.modelo;
+                document.getElementById('model').value = extractedData.modelo.value;
                 appliedCount++;
             }
             
-            // Aplicar número de série
+            // Aplicar número de série (IMPORTANTE: vai para o primeiro campo)
             if (extractedData.numeroSerie) {
                 const serialInputs = document.querySelectorAll('input[name="serialNumber[]"]');
                 if (serialInputs[0]) {
-                    serialInputs[0].value = extractedData.numeroSerie;
+                    serialInputs[0].value = extractedData.numeroSerie.value;
                     appliedCount++;
                 }
             }
             
             // Aplicar ano de fabrico
             if (extractedData.anoFabrico) {
-                document.getElementById('manufactureYear').value = extractedData.anoFabrico;
+                document.getElementById('manufactureYear').value = extractedData.anoFabrico.value;
                 appliedCount++;
             }
             
             // Aplicar potências
             if (extractedData.potenciaFrio) {
-                document.getElementById('coldPower').value = extractedData.potenciaFrio;
+                document.getElementById('coldPower').value = extractedData.potenciaFrio.value;
                 appliedCount++;
             }
             
             if (extractedData.potenciaCalor) {
-                document.getElementById('heatPower').value = extractedData.potenciaCalor;
+                document.getElementById('heatPower').value = extractedData.potenciaCalor.value;
                 appliedCount++;
             }
             
             // Aplicar fluido
             if (extractedData.fluido) {
-                document.getElementById('existingFluid').value = extractedData.fluido;
-                document.getElementById('loadedFluidType').value = extractedData.fluido;
+                document.getElementById('existingFluid').value = extractedData.fluido.value;
+                document.getElementById('loadedFluidType').value = extractedData.fluido.value;
                 appliedCount++;
             }
             
             // Aplicar carga de refrigerante
             if (extractedData.cargaRefrigerante) {
-                document.getElementById('nominalFluidQuantity').value = extractedData.cargaRefrigerante;
+                document.getElementById('nominalFluidQuantity').value = extractedData.cargaRefrigerante.value;
                 appliedCount++;
             }
             
             showNotification(`${appliedCount} campos preenchidos automaticamente!`, 'success');
-            document.getElementById('ocrResults').style.display = 'none';
-            
-            // Fazer scroll para o topo do formulário para ver os campos preenchidos
             document.getElementById('interventionForm').scrollIntoView({ behavior: 'smooth' });
         }
 
+        // ===== [MANTENHA TODAS AS OUTRAS FUNÇÕES ORIGINAIS DO CÓDIGO ANTERIOR] =====
         // ===== FUNÇÕES BÁSICAS DA APLICAÇÃO =====
         function initializeForm() {
             // Preencher anos para o select
@@ -1909,6 +2210,13 @@
             document.getElementById('editRegistoId').value = '';
             document.getElementById('cancelEditButton').style.display = 'none';
             document.getElementById('interventionDate').valueAsDate = new Date();
+            
+            // Limpar fotos e dados OCR
+            allPhotos = [];
+            extractedData = {};
+            updatePhotoGallery();
+            document.getElementById('extractedDataSummary').style.display = 'none';
+            
             openTab('novoRegisto');
         }
 
@@ -1951,7 +2259,12 @@
                 observations: formData.get('observations'),
                 status: 'pendente',
                 createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
+                updatedAt: new Date().toISOString(),
+                // Guardar informações das fotos processadas
+                processedPhotos: allPhotos.filter(p => p.processed).map(p => ({
+                    processed: p.processed,
+                    hasData: Object.keys(p.data).length > 0
+                }))
             };
             
             if (isEditMode) {
@@ -2254,7 +2567,7 @@
             }
         }
 
-        // ===== FUNÇÕES DE VALIDAÇÃO E ELIMINAÇÃO (SIMPLIFICADAS) =====
+        // ===== FUNÇÕES DE VALIDAÇÃO E ELIMINAÇÃO =====
         function solicitarValidacao(id) {
             currentRegistoId = id;
             openModal('validacaoModal');
@@ -2333,7 +2646,7 @@
         if ('serviceWorker' in navigator) {
             const swScript = `
                 // Service Worker para Registo de Gases Fluorados
-                const CACHE_NAME = 'gases-fluorados-v2.0';
+                const CACHE_NAME = 'gases-fluorados-v3.0';
                 const urlsToCache = [
                     './',
                     './index.html',
