@@ -4,23 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Registo de Gases Fluorados</title>
-    <!-- Web App Manifest -->
-    <link rel="manifest" href="./manifest.json">
-
-    <!-- Meta tags para iOS -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Gases Fluorados">
-
-    <!-- Ícones para iOS -->
-    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiMyYzNlNTAiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMiI+CjxwYXRoIGQ9Ik0xMiAyMkM2LjQ3NyAyMiAyIDE3LjUyMyIgMTIgMTJTNjQuNDc3IDIgMTIgMnMxMCA0LjQ3NyAxMCAxMC00LjQ3cyAxMC0xMCAxMHptMC0yYTggOCAwIDEgMCAwLTE2IDggOCAwIDAgMCAwIDE2eiIvPjxwYXRoIGQ9Ik0xMiA2djZNMTIgMTZ2LTYiLz48L3N2Zz4KPC9zdmc+">
-    
-    <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#2c3e50">
-    <meta name="description" content="Sistema de registo de gases fluorados - Decreto-Lei n.º 145/2017">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Registo Gases Fluorados">
     
     <!-- Tesseract.js para OCR -->
     <script src="https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
@@ -29,11 +12,9 @@
         :root {
             --primary-color: #2c3e50;
             --secondary-color: #3498db;
-            --accent-color: #e74c3c;
             --success-color: #27ae60;
             --warning-color: #f39c12;
-            --light-color: #ecf0f1;
-            --dark-color: #34495e;
+            --danger-color: #e74c3c;
         }
         
         * {
@@ -47,7 +28,6 @@
             background-color: #f5f7fa;
             color: #333;
             line-height: 1.6;
-            font-size: 14px;
         }
         
         .container {
@@ -59,229 +39,38 @@
         header {
             background-color: var(--primary-color);
             color: white;
-            padding: 12px 20px;
-            border-radius: 5px 5px 0 0;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-        }
-        
-        .header-main {
-            flex-grow: 1;
-        }
-        
-        .header-text {
-            flex-grow: 1;
-        }
-        
-        h1 {
-            font-size: 1.6rem;
-            margin-bottom: 3px;
-        }
-        
-        .header-text p {
-            font-size: 0.85rem;
-            opacity: 0.9;
-        }
-        
-        h2 {
-            font-size: 1.4rem;
-            margin: 20px 0 15px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #ddd;
-            color: var(--primary-color);
-        }
-        
-        .dashboard-section {
-            background-color: white;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, var(--secondary-color), #2980b9);
-            color: white;
-            padding: 15px;
+            padding: 15px 20px;
             border-radius: 8px;
-            text-align: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            min-height: 90px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        
-        .stat-card h3 {
-            font-size: 1.6rem;
-            margin-bottom: 5px;
-        }
-        
-        .stat-card p {
-            font-size: 0.8rem;
-            opacity: 0.9;
-        }
-        
-        .filters {
-            display: flex;
-            gap: 15px;
             margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .filters select, .filters input {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 0.9rem;
-        }
-        
-        .registros-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        
-        .registros-table th,
-        .registros-table td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        
-        .registros-table th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-        
-        .registros-table tr:hover {
-            background-color: #f8f9fa;
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-        
-        .status-pendente {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-        
-        .status-validado {
-            background-color: #d1edff;
-            color: #0c5460;
-        }
-        
-        .status-aprovado {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 600;
-            transition: background-color 0.3s;
-            text-decoration: none;
-            min-width: 40px;
-            height: 40px;
-        }
-        
-        .btn-icon {
-            font-size: 1rem;
-        }
-        
-        .btn-primary {
-            background-color: var(--secondary-color);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background-color: #2980b9;
-        }
-        
-        .btn-success {
-            background-color: var(--success-color);
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background-color: #219653;
-        }
-        
-        .btn-warning {
-            background-color: var(--warning-color);
-            color: white;
-        }
-        
-        .btn-warning:hover {
-            background-color: #e67e22;
-        }
-        
-        .btn-danger {
-            background-color: var(--accent-color);
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background-color: #c0392b;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 5px;
-            flex-wrap: nowrap;
-            justify-content: flex-start;
-            align-items: center;
         }
         
         .nav-tabs {
             display: flex;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 2px solid #ddd;
             margin-bottom: 20px;
-            flex-wrap: wrap;
+            background: white;
+            border-radius: 8px 8px 0 0;
+            padding: 0 10px;
         }
         
         .nav-tab {
-            padding: 12px 20px;
+            padding: 15px 25px;
             cursor: pointer;
             border: none;
             background: none;
-            font-size: 1rem;
             font-weight: 600;
             color: #6c757d;
             border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
         }
         
         .nav-tab.active {
             color: var(--secondary-color);
             border-bottom: 3px solid var(--secondary-color);
+        }
+        
+        .nav-tab:hover {
+            color: var(--primary-color);
         }
         
         .tab-content {
@@ -292,293 +81,145 @@
             display: block;
         }
         
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #6c757d;
-        }
-        
-        .pagination {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-            gap: 5px;
-        }
-        
-        .pagination button {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            background: white;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-        
-        .pagination button.active {
-            background-color: var(--secondary-color);
-            color: white;
-            border-color: var(--secondary-color);
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .modal-content {
+        .dashboard-section {
             background-color: white;
             padding: 25px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .modal-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-        
-        .close-modal {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #6c757d;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-        
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 0.9rem;
-        }
-        
-        .required::after {
-            content: " *";
-            color: var(--accent-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
         .form-section {
             background-color: white;
-            padding: 20px;
+            padding: 25px;
             margin-bottom: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
-        .compact-section {
-            padding: 15px;
-        }
-        
-        .compact-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .compact-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        
-        .fixed-data {
-            background-color: #f8f9fa;
-            padding: 10px;
-            border-radius: 4px;
-            border-left: 4px solid var(--secondary-color);
-            font-weight: 600;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-        }
-        
-        .checkbox-group {
-            margin: 10px 0;
-        }
-        
-        .checkbox-group label {
-            display: flex;
-            align-items: center;
-            font-weight: normal;
+        h1 {
+            font-size: 1.8rem;
             margin-bottom: 5px;
-            font-size: 0.9rem;
         }
         
-        .checkbox-group input[type="checkbox"] {
-            width: auto;
-            margin-right: 8px;
+        h2 {
+            font-size: 1.5rem;
+            margin: 20px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+            color: var(--primary-color);
         }
         
-        .serial-numbers-container {
-            margin-top: 10px;
-        }
-        
-        .serial-number-entry {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
+        .btn {
+            display: inline-flex;
             align-items: center;
-        }
-        
-        .serial-number-entry select {
-            flex: 0 0 140px;
-        }
-        
-        .serial-number-entry input {
-            flex: 1;
-        }
-        
-        .add-serial-btn {
-            background-color: var(--success-color);
-            color: white;
+            justify-content: center;
+            padding: 12px 24px;
             border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 0.9rem;
-            margin-top: 10px;
-        }
-        
-        .remove-serial-btn {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-        
-        .button-group {
-            display: flex;
-            gap: 15px;
-            margin-top: 25px;
-        }
-        
-        .btn-submit {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 12px 25px;
+            font-weight: 600;
+            text-decoration: none;
+            margin: 8px;
             font-size: 1rem;
-        }
-        
-        .btn-submit:hover {
-            background-color: #1a252f;
-        }
-        
-        .btn-duplicate {
-            background-color: #f39c12;
-            color: white;
-        }
-        
-        .btn-duplicate:hover {
-            background-color: #e67e22;
-        }
-        
-        .other-brand-input {
-            margin-top: 10px;
-            display: none;
-        }
-        
-        .edit-mode-banner {
-            background-color: var(--warning-color);
-            color: white;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: 600;
-        }
-        
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 5px;
-            color: white;
-            font-weight: 600;
-            z-index: 1100;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-            transform: translateX(150%);
-            transition: transform 0.3s ease;
-        }
-        
-        .notification.show {
-            transform: translateX(0);
-        }
-        
-        .notification.success {
-            background-color: var(--success-color);
-        }
-        
-        .notification.error {
-            background-color: var(--accent-color);
-        }
-        
-        .notification.warning {
-            background-color: var(--warning-color);
-        }
-        
-        .install-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            z-index: 1000;
-            display: none;
-            font-weight: 600;
-            font-size: 0.9rem;
             transition: all 0.3s ease;
+            min-width: 160px;
         }
         
-        .install-btn:hover {
-            background: var(--dark-color);
+        .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         
-        .sync-buttons {
+        .btn-primary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        /* ESTILOS OCR - MELHORADOS */
+        .ocr-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 3px dashed #adb5bd;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin: 25px 0;
+            position: relative;
+        }
+        
+        .ocr-section::before {
+            content: "📸";
+            font-size: 3rem;
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0 15px;
+        }
+        
+        .ocr-buttons {
+            margin: 25px 0;
             display: flex;
-            gap: 8px;
-            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .camera-view {
+            display: none;
+            margin: 20px 0;
+            text-align: center;
+            background: #000;
+            border-radius: 12px;
+            padding: 15px;
+        }
+        
+        #cameraVideo {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 8px;
+            background: #000;
+        }
+        
+        .camera-controls {
+            margin-top: 20px;
+        }
+        
+        .ocr-preview {
+            max-width: 100%;
+            max-height: 400px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            border: 3px solid var(--success-color);
+        }
+        
+        .ocr-results {
+            background: white;
+            border: 2px solid var(--success-color);
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 20px;
+            text-align: left;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         
         .file-input-wrapper {
@@ -596,74 +237,20 @@
             cursor: pointer;
         }
         
-        .github-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.8rem;
-            color: #ecf0f1;
-        }
-        
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: #27ae60;
-        }
-        
-        .status-dot.offline {
-            background-color: #e74c3c;
-        }
-        
-        /* Estilos para OCR - GARANTIR VISIBILIDADE */
-        .ocr-section {
-            background: #f8f9fa;
-            border: 2px dashed #dee2e6;
-            border-radius: 8px;
-            padding: 25px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .camera-view {
-            display: none;
-            margin: 20px 0;
-            text-align: center;
-        }
-        
-        #cameraVideo {
-            width: 100%;
-            max-width: 400px;
-            border-radius: 8px;
-            background: #000;
-        }
-        
-        .camera-controls {
-            margin-top: 15px;
-        }
-        
-        .ocr-preview {
-            max-width: 100%;
-            max-height: 300px;
-            margin: 15px 0;
-            border-radius: 4px;
-            display: none;
-        }
-        
-        .ocr-loading {
+        .loading {
             display: none;
             text-align: center;
-            padding: 20px;
+            padding: 30px;
         }
         
         .spinner {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
+            border-top: 4px solid var(--secondary-color);
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 2s linear infinite;
-            margin: 0 auto 15px;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
         }
         
         @keyframes spin {
@@ -671,122 +258,49 @@
             100% { transform: rotate(360deg); }
         }
         
-        .ocr-results {
-            background: white;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            padding: 20px;
-            margin-top: 15px;
+        .feature-list {
             text-align: left;
-            display: none;
+            margin: 20px auto;
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
-        .ocr-buttons {
-            margin: 20px 0;
-            display: block !important;
+        .feature-list ul {
+            list-style: none;
+            padding: 0;
         }
         
-        .ocr-buttons .btn {
-            margin: 10px;
-            padding: 15px 25px;
-            font-size: 1.1rem;
-            min-width: 180px;
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f1f1;
+        }
+        
+        .feature-list li:before {
+            content: "✅ ";
+            margin-right: 10px;
         }
         
         @media (max-width: 768px) {
-            header {
+            .nav-tabs {
                 flex-direction: column;
+            }
+            
+            .nav-tab {
                 text-align: center;
-                padding: 15px;
-                gap: 10px;
+                border-bottom: 1px solid #eee;
             }
             
-            .sync-buttons {
-                justify-content: center;
-            }
-            
-            .stats-container {
-                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-                gap: 8px;
-            }
-            
-            .stat-card {
-                padding: 10px;
-                min-height: 80px;
-            }
-            
-            .stat-card h3 {
-                font-size: 1.4rem;
-            }
-            
-            .stat-card p {
-                font-size: 0.75rem;
-            }
-            
-            .filters {
+            .ocr-buttons {
                 flex-direction: column;
+                align-items: center;
             }
             
-            .registros-table {
-                display: block;
-                overflow-x: auto;
-            }
-            
-            .action-buttons {
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            
-            .compact-grid, .compact-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .serial-number-entry {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .serial-number-entry select {
-                flex: 1;
-            }
-            
-            .button-group {
-                flex-direction: column;
-            }
-            
-            .install-btn {
-                bottom: 15px;
-                right: 15px;
-                padding: 10px 16px;
-                font-size: 0.8rem;
-            }
-            
-            .ocr-buttons .btn {
-                display: block;
+            .btn {
                 width: 100%;
-                margin: 10px 0;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .stats-container {
-                grid-template-columns: 1fr 1fr;
-            }
-            
-            h1 {
-                font-size: 1.4rem;
-            }
-            
-            .action-buttons {
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            
-            .sync-buttons {
-                flex-wrap: wrap;
-                justify-content: center;
+                max-width: 300px;
             }
         }
     </style>
@@ -794,57 +308,22 @@
 <body>
     <div class="container">
         <header>
-            <div class="header-main">
-                <div class="header-text">
-                    <h1>Dashboard - Registo de Gases Fluorados</h1>
-                    <p>Decreto-Lei n.º 145/2017, de 30 de novembro</p>
-                </div>
-            </div>
-            <div class="sync-buttons">
-                <div class="github-status">
-                    <span id="githubStatusDot" class="status-dot offline"></span>
-                    <span id="githubStatusText">Offline</span>
-                </div>
-                <button class="btn btn-success" onclick="syncWithGitHub()" title="Sincronizar com GitHub">🔄</button>
-                <button class="btn btn-warning" onclick="exportData()" title="Exportar dados">📤</button>
-                <div class="file-input-wrapper">
-                    <button class="btn btn-primary" title="Importar dados">📥</button>
-                    <input type="file" accept=".json" onchange="importData(event)">
-                </div>
-                <button class="btn btn-warning" onclick="openModal('githubLoginModal')" title="Configurar GitHub">⚙️ GitHub</button>
-            </div>
+            <h1>Dashboard - Registo de Gases Fluorados</h1>
+            <p>Decreto-Lei n.º 145/2017, de 30 de novembro</p>
         </header>
         
         <div class="nav-tabs">
-            <button class="nav-tab active" onclick="openTab('dashboard')">Dashboard</button>
-            <button class="nav-tab" onclick="openTab('registos')">Registos</button>
-            <button class="btn btn-primary" onclick="novoRegisto()" style="margin-left: auto;">Novo Registo</button>
+            <button class="nav-tab active" onclick="openTab('dashboard')">📊 Dashboard</button>
+            <button class="nav-tab" onclick="openTab('registos')">📋 Registos</button>
+            <button class="nav-tab" onclick="openTab('novoRegisto')" style="margin-left: auto;">➕ Novo Registo</button>
         </div>
         
         <!-- Tab: Dashboard -->
         <div id="dashboard" class="tab-content active">
             <div class="dashboard-section">
                 <h2>Estatísticas Gerais</h2>
-                
-                <div class="stats-container">
-                    <div class="stat-card">
-                        <h3 id="totalRegistos">0</h3>
-                        <p>Total de Registos</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3 id="pendentesValidacao">0</h3>
-                        <p>Pendentes de Validação</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3 id="registosValidados">0</h3>
-                        <p>Registos Validados</p>
-                    </div>
-                </div>
-                
-                <h2>Registos Recentes</h2>
-                <div id="recentRegistos">
-                    <!-- Conteúdo será preenchido por JavaScript -->
-                </div>
+                <p>Bem-vindo ao sistema de registo de gases fluorados.</p>
+                <p>Clique em <strong>"Novo Registo"</strong> para começar.</p>
             </div>
         </div>
         
@@ -852,60 +331,37 @@
         <div id="registos" class="tab-content">
             <div class="dashboard-section">
                 <h2>Lista de Registos</h2>
-                
-                <div class="filters">
-                    <select id="filterStatus">
-                        <option value="">Todos os Estados</option>
-                        <option value="pendente">Pendente</option>
-                        <option value="validado">Validado</option>
-                        <option value="aprovado">Aprovado</option>
-                    </select>
-                    
-                    <input type="text" id="searchInput" placeholder="Pesquisar por cliente...">
-                    
-                    <button class="btn btn-primary" onclick="applyFilters()">Aplicar Filtros</button>
-                    <button class="btn" onclick="clearFilters()">Limpar</button>
-                </div>
-                
-                <table class="registros-table">
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Cliente</th>
-                            <th>Técnico</th>
-                            <th>Equipamento</th>
-                            <th>Estado</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="registrosTableBody">
-                        <!-- Conteúdo será preenchido por JavaScript -->
-                    </tbody>
-                </table>
-                
-                <div class="pagination" id="pagination">
-                    <!-- Paginação será gerada por JavaScript -->
-                </div>
+                <p>Lista de registos existentes...</p>
             </div>
         </div>
         
-        <!-- Tab: Novo Registo / Editar Registo -->
+        <!-- Tab: Novo Registo -->
         <div id="novoRegisto" class="tab-content">
             <div class="dashboard-section">
-                <div id="editModeBanner" class="edit-mode-banner" style="display: none;">
-                    ⚠️ Está a editar um registo existente. As alterações serão guardadas quando submeter.
-                </div>
+                <h2>Novo Registo de Intervenção</h2>
                 
-                <h2 id="formTitle">Novo Registo de Intervenção</h2>
-                
-                <!-- Seção OCR - GARANTIR VISIBILIDADE -->
+                <!-- SEÇÃO OCR - MELHORADA -->
                 <div class="form-section">
-                    <h2>📸 SCAN AUTOMÁTICO DA ETIQUETA</h2>
                     <div class="ocr-section">
-                        <p style="font-size: 1.1rem; margin-bottom: 20px;">
-                            <strong>Capture uma foto da etiqueta para preenchimento automático</strong>
+                        <h2 style="border: none; margin-top: 20px; color: var(--primary-color);">SCAN AUTOMÁTICO DA ETIQUETA</h2>
+                        
+                        <p style="font-size: 1.2rem; margin-bottom: 25px; font-weight: 600; color: #495057;">
+                            Capture uma foto da etiqueta para preenchimento automático dos dados
                         </p>
                         
+                        <div class="feature-list">
+                            <h3 style="color: var(--secondary-color); margin-bottom: 15px;">🎯 O que é extraído automaticamente:</h3>
+                            <ul>
+                                <li><strong>Marca</strong> do equipamento</li>
+                                <li><strong>Modelo</strong> exato</li>
+                                <li><strong>Número de série</strong></li>
+                                <li><strong>Potências</strong> (frio/calor)</li>
+                                <li><strong>Ano de fabrico</strong></li>
+                                <li><strong>Tipo de fluido</strong></li>
+                                <li><strong>Carga de refrigerante</strong></li>
+                            </ul>
+                        </div>
+
                         <!-- Container da Câmara -->
                         <div class="camera-view" id="cameraContainer">
                             <video id="cameraVideo" autoplay playsinline></video>
@@ -919,453 +375,150 @@
                             </div>
                         </div>
                         
-                        <!-- Botões Principais - GARANTIR VISIBILIDADE -->
+                        <!-- BOTÕES PRINCIPAIS -->
                         <div class="ocr-buttons" id="cameraButtons">
-                            <button class="btn btn-success" onclick="startCamera()">
+                            <button class="btn btn-success" onclick="startCamera()" id="cameraBtn">
                                 📷 Usar Câmara
                             </button>
                             <div class="file-input-wrapper">
                                 <button class="btn btn-primary">
                                     📁 Carregar Foto
                                 </button>
-                                <input type="file" id="imageUpload" accept="image/*" capture="environment" onchange="handleImageUpload(event)">
+                                <input type="file" id="imageUpload" accept="image/*" onchange="handleImageUpload(event)">
                             </div>
+                            <button class="btn btn-warning" onclick="showManualEntry()">
+                                ✍️ Preencher Manualmente
+                            </button>
+                        </div>
+                        
+                        <!-- Loading -->
+                        <div class="loading" id="ocrLoading">
+                            <div class="spinner"></div>
+                            <p style="font-size: 1.1rem; color: var(--secondary-color);">
+                                🔍 A processar imagem e extrair dados...
+                            </p>
+                            <p style="color: #6c757d; margin-top: 10px;">
+                                Isto pode demorar alguns segundos
+                            </p>
                         </div>
                         
                         <!-- Pré-visualização -->
-                        <img id="ocrPreview" class="ocr-preview" alt="Pré-visualização">
-                        
-                        <!-- Loading -->
-                        <div class="ocr-loading" id="ocrLoading">
-                            <div class="spinner"></div>
-                            <p>A processar imagem e extrair dados...</p>
-                        </div>
+                        <img id="ocrPreview" class="ocr-preview" alt="Pré-visualização da imagem">
                         
                         <!-- Resultados -->
                         <div id="ocrResults" class="ocr-results">
-                            <h4>📋 Dados Extraídos da Etiqueta:</h4>
+                            <h4 style="color: var(--success-color); margin-bottom: 20px;">
+                                ✅ Dados Extraídos da Etiqueta
+                            </h4>
                             <div id="extractedData"></div>
-                            <button class="btn btn-success" onclick="applyExtractedData()" style="margin-top: 15px;">
-                                ✅ Aplicar Dados ao Formulário
-                            </button>
+                            <div style="margin-top: 25px; text-align: center;">
+                                <button class="btn btn-success" onclick="applyExtractedData()">
+                                    ✅ Aplicar Dados ao Formulário
+                                </button>
+                                <button class="btn btn-warning" onclick="retryOCR()">
+                                    🔄 Tentar Novamente
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <form id="interventionForm" onsubmit="submitForm(event)">
-                    <input type="hidden" id="editRegistoId" name="editRegistoId" value="">
-                    
-                    <!-- Seção 1: Dados da Intervenção -->
-                    <div class="form-section compact-section">
-                        <h2>ADICIONAR INTERVENÇÃO</h2>
-                        
-                        <div class="compact-grid">
-                            <div class="form-group">
-                                <label for="interventionDate" class="required">Data da Intervenção</label>
-                                <input type="date" id="interventionDate" name="interventionDate" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Número do Técnico</label>
-                                <div class="fixed-data">1925</div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Nome do Técnico</label>
-                                <div class="fixed-data">Marco dos Santos Pinheiro</div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Nº do Certificado</label>
-                                <div class="fixed-data">TGF001925</div>
-                            </div>
-                        </div>
-                        
-                        <div class="compact-row">
-                            <div class="form-group">
-                                <label>Nome da Empresa</label>
-                                <div class="fixed-data">Pinheiro Instalações Eléctricas e Canalizações, Unipessoal Lda</div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Nº do Certificado</label>
-                                <div class="fixed-data">SAC-1881/2023</div>
-                            </div>
-                        </div>
+                <!-- Formulário normal (simulado) -->
+                <div class="form-section">
+                    <h2>Dados do Equipamento</h2>
+                    <p>Os dados extraídos aparecerão aqui automaticamente...</p>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 6px; margin-top: 15px;">
+                        <p><strong>Marca:</strong> <span id="displayMarca">-</span></p>
+                        <p><strong>Modelo:</strong> <span id="displayModelo">-</span></p>
+                        <p><strong>Nº Série:</strong> <span id="displaySerie">-</span></p>
+                        <p><strong>Potência Frio:</strong> <span id="displayFrio">-</span> kW</p>
+                        <p><strong>Potência Calor:</strong> <span id="displayCalor">-</span> kW</p>
                     </div>
-                    
-                    <!-- Seção 2: Dados do Cliente -->
-                    <div class="form-section">
-                        <h2>1. DADOS DO CLIENTE</h2>
-                        
-                        <div class="form-group">
-                            <label for="clientName" class="required">Nome da Empresa / Particular</label>
-                            <input type="text" id="clientName" name="clientName" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="equipmentOwner" class="required">Detentor do Equipamento</label>
-                            <input type="text" id="equipmentOwner" name="equipmentOwner" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="equipmentLocation" class="required">Localização do Equipamento</label>
-                            <input type="text" id="equipmentLocation" name="equipmentLocation" required>
-                        </div>
-                        
-                        <div class="compact-row">
-                            <div class="form-group">
-                                <label for="locality" class="required">Localidade</label>
-                                <input type="text" id="locality" name="locality" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="postalCode" class="required">Código Postal</label>
-                                <input type="text" id="postalCode" name="postalCode" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Seção 3: Caracterização do Equipamento -->
-                    <div class="form-section">
-                        <h2>2. CARACTERIZAÇÃO DO EQUIPAMENTO</h2>
-                        
-                        <div class="form-group">
-                            <label for="brand" class="required">Marca</label>
-                            <select id="brand" name="brand" required>
-                                <option value="">Escolha Uma Marca</option>
-                                <option value="GREE">GREE</option>
-                                <option value="Daikin">Daikin</option>
-                                <option value="Mitsubishi">Mitsubishi</option>
-                                <option value="LG">LG</option>
-                                <option value="Samsung">Samsung</option>
-                                <option value="Fujitsu">Fujitsu</option>
-                                <option value="Panasonic">Panasonic</option>
-                                <option value="Carrier">Carrier</option>
-                                <option value="Trane">Trane</option>
-                                <option value="outra">Outra</option>
-                            </select>
-                            <input type="text" id="otherBrand" name="otherBrand" class="other-brand-input" placeholder="Especifique a marca">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="model" class="required">Modelo</label>
-                            <input type="text" id="model" name="model" placeholder="Modelo do equipamento" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="required">N.º Série (UI/UE)</label>
-                            <div class="serial-numbers-container" id="serialNumbersContainer">
-                                <div class="serial-number-entry">
-                                    <select name="serialType[]">
-                                        <option value="UI">UI - Unidade Interior</option>
-                                        <option value="UE">UE - Unidade Exterior</option>
-                                    </select>
-                                    <input type="text" name="serialNumber[]" placeholder="Número de série" required>
-                                    <button type="button" class="remove-serial-btn">×</button>
-                                </div>
-                            </div>
-                            <button type="button" class="add-serial-btn">+ Adicionar outra unidade</button>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="manufactureYear" class="required">Ano de Fabrico</label>
-                            <select id="manufactureYear" name="manufactureYear" required>
-                                <option value="">Escolha um ano</option>
-                            </select>
-                        </div>
-                        
-                        <div class="compact-row">
-                            <div class="form-group">
-                                <label for="electricPower" class="required">Potência Elétrica (kW)</label>
-                                <input type="number" id="electricPower" name="electricPower" step="0.01" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="heatPower" class="required">Potência Calor (kW)</label>
-                                <input type="number" id="heatPower" name="heatPower" step="0.01" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="coldPower" class="required">Potência Frio (kW)</label>
-                                <input type="number" id="coldPower" name="coldPower" step="0.01" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="installationType" class="required">Tipo de Instalação</label>
-                            <select id="installationType" name="installationType" required>
-                                <option value="">Escolha o tipo de instalação</option>
-                                <option value="ar-condicionado-split">Ar Condicionado - Split</option>
-                                <option value="ar-condicionado-multisplit">Ar Condicionado - Multisplit</option>
-                                <option value="ar-condicionado-vrf">Ar Condicionado VRF/CRV</option>
-                                <option value="refrigeracao-comercial">Refrigeração Comercial</option>
-                                <option value="refrigeracao-industrial">Refrigeração Industrial</option>
-                                <option value="bomba-calor">Bomba de Calor</option>
-                                <option value="chiller">Chiller</option>
-                                <option value="outro">Outro</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="hermeticSystem" class="required">Sistema Herméticamente Fechado?</label>
-                            <select id="hermeticSystem" name="hermeticSystem" required>
-                                <option value="">Escolha uma opção</option>
-                                <option value="sim">Sim</option>
-                                <option value="nao">Não</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <!-- Seção 4: Caracterização do Fluido -->
-                    <div class="form-section">
-                        <h2>3. CARACTERIZAÇÃO DO FLUIDO</h2>
-                        
-                        <div class="form-group">
-                            <label for="existingFluid">Fluido Existente</label>
-                            <select id="existingFluid" name="existingFluid">
-                                <option value="">Tipo de fluido no equipamento</option>
-                                <option value="R-22">R-22</option>
-                                <option value="R-134a">R-134a</option>
-                                <option value="R-410A">R-410A</option>
-                                <option value="R-32">R-32</option>
-                                <option value="R-404A">R-404A</option>
-                                <option value="R-407C">R-407C</option>
-                                <option value="Outro">Outro</option>
-                            </select>
-                        </div>
-                        
-                        <div class="compact-row">
-                            <div class="form-group">
-                                <label for="nominalFluidQuantity">Quant. Fluido Nominal (Pré-Carga + Carga Adicional) (Kg)</label>
-                                <input type="number" id="nominalFluidQuantity" name="nominalFluidQuantity" step="0.01">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="nominalFluidCO2">Quant. Fluido Nominal (Ton. CO2 Eq.)</label>
-                                <input type="number" id="nominalFluidCO2" name="nominalFluidCO2" step="0.01">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="required">Tipo de Intervenção (mínimo uma opção)</label>
-                            <div class="checkbox-group" id="interventionTypesContainer">
-                                <label><input type="checkbox" name="interventionType" value="carga"> Carga c/ Fluido</label>
-                                <label><input type="checkbox" name="interventionType" value="recuperacao"> Recuperação de fluido</label>
-                                <label><input type="checkbox" name="interventionType" value="detecao"> Pesquisa/Deteção de fugas</label>
-                                <label><input type="checkbox" name="interventionType" value="reparacao"> Reparação de fugas</label>
-                                <label><input type="checkbox" name="interventionType" value="acompanhamento"> Ação de acompanhamento</label>
-                                <label><input type="checkbox" name="interventionType" value="verificacao"> Verificação/Ensaio do Sistema Fixo de Deteção de Fugas</label>
-                                <label><input type="checkbox" name="interventionType" value="instalacao"> Instalação</label>
-                                <label><input type="checkbox" name="interventionType" value="outra"> Outra, especifique qual:</label>
-                                <input type="text" id="otherIntervention" name="otherIntervention" placeholder="Especifique outra intervenção">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="loadedFluidType">Fluido Carregado</label>
-                            <select id="loadedFluidType" name="loadedFluidType">
-                                <option value="">Tipo de fluido</option>
-                                <option value="R-22">R-22</option>
-                                <option value="R-134a">R-134a</option>
-                                <option value="R-410A">R-410A</option>
-                                <option value="R-32">R-32</option>
-                                <option value="R-404A">R-404A</option>
-                                <option value="R-407C">R-407C</option>
-                                <option value="Outro">Outro</option>
-                            </select>
-                        </div>
-                        
-                        <div class="compact-row">
-                            <div class="form-group">
-                                <label for="virginFluid">Virgem (kg)</label>
-                                <input type="number" id="virginFluid" name="virginFluid" step="0.01">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="recycledFluid">Reciclado/Recuperado (kg)</label>
-                                <input type="number" id="recycledFluid" name="recycledFluid" step="0.01">
-                            </div>
-                        </div>
-                        
-                        <div class="compact-row">
-                            <div class="form-group">
-                                <label for="valuedFluid">Valorizado (kg)</label>
-                                <input type="number" id="valuedFluid" name="valuedFluid" step="0.01">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="recoveredFluid">Recuperado (kg)</label>
-                                <input type="number" id="recoveredFluid" name="recoveredFluid" step="0.01">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Para efeitos de:</label>
-                            <div class="checkbox-group" id="purposeContainer">
-                                <label><input type="checkbox" name="purpose" value="recarga-mesmo"> Recarga mesmo equipamento</label>
-                                <label><input type="checkbox" name="purpose" value="recarga-outro"> Recarga noutro equipamento</label>
-                                <label><input type="checkbox" name="purpose" value="reciclagem"> Reciclagem</label>
-                                <label><input type="checkbox" name="purpose" value="valorizacao"> Valorização</label>
-                                <label><input type="checkbox" name="purpose" value="destruicao"> Destruição, especificar destinatário:</label>
-                                <input type="text" id="destructionRecipient" name="destructionRecipient" placeholder="Especifique o destinatário">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="observations">Observações</label>
-                            <textarea id="observations" name="observations" rows="3" placeholder="Observações se necessário"></textarea>
-                        </div>
-                    </div>
-                    
-                    <div class="button-group">
-                        <button type="button" class="btn btn-duplicate">Salvar e Duplicar</button>
-                        <button type="submit" class="btn btn-submit" id="submitButton">Submeter Registo</button>
-                        <button type="button" class="btn btn-danger" id="cancelEditButton" style="display: none;">Cancelar Edição</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal para Detalhes do Registo -->
-    <div id="detalhesRegistoModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Detalhes do Registo</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            
-            <div id="detalhesRegistoContent">
-                <!-- Conteúdo será preenchido por JavaScript -->
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal para Validação -->
-    <div id="validacaoModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Validar Registo</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            
-            <div id="validacaoContent">
-                <p>Tem a certeza que pretende validar este registo?</p>
-                <div class="form-group">
-                    <label for="observacoesValidacao">Observações (opcional)</label>
-                    <textarea id="observacoesValidacao" rows="3" placeholder="Adicione observações sobre a validação..."></textarea>
-                </div>
-                
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button class="btn btn-success" onclick="validarRegisto()">Confirmar Validação</button>
-                    <button class="btn" onclick="closeModal('validacaoModal')">Cancelar</button>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Modal para Eliminar Registo -->
-    <div id="eliminarRegistoModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Eliminar Registo</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            
-            <div id="eliminarRegistoContent">
-                <p>Tem a certeza que pretende eliminar este registo?</p>
-                <p><strong>Esta ação não pode ser desfeita.</strong></p>
-                
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button class="btn btn-danger" id="confirmarEliminacao">Confirmar Eliminação</button>
-                    <button class="btn" onclick="closeModal('eliminarRegistoModal')">Cancelar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal para Login GitHub -->
-    <div id="githubLoginModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Configurar GitHub Sync</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            
-            <div class="form-group">
-                <label for="githubToken">Token de Acesso GitHub</label>
-                <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="form-control">
-                <small>
-                    <strong>Como obter o token:</strong><br>
-                    1. Vá para <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings > Tokens</a><br>
-                    2. Clique "Generate new token (classic)"<br>
-                    3. Selecione permissões: <code>repo</code> e <code>workflow</code><br>
-                    4. Copie o token (começa com ghp_)
-                </small>
-            </div>
-            
-            <div class="form-group">
-                <label for="repoName">Nome do Repositório</label>
-                <input type="text" id="repoName" placeholder="seu-username/gases-fluorados-data" class="form-control">
-                <small>Formato: username/nome-do-repositorio (crie o repositório primeiro no GitHub)</small>
-            </div>
-            
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button class="btn btn-success" onclick="saveGitHubConfig()">Guardar Configuração</button>
-                <button class="btn btn-danger" onclick="clearGitHubConfig()">Remover Configuração</button>
-                <button class="btn" onclick="closeModal('githubLoginModal')">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Botão de Instalação PWA -->
-    <button class="install-btn" id="installButton">📱 Instalar App</button>
-
-    <!-- Notificações -->
-    <div id="notification" class="notification"></div>
 
     <script>
-        // ===== CONFIGURAÇÕES =====
-        const GITHUB_CONFIG_KEY = 'github_config';
-        const STORAGE_KEY = 'registos_gases_fluorados';
-        const API_URL = 'https://api.github.com';
-
         // ===== VARIÁVEIS GLOBAIS =====
-        let registos = [];
-        let currentRegistoId = null;
-        let currentPage = 1;
-        const recordsPerPage = 10;
-        let isEditMode = false;
-        let githubConfig = null;
         let currentStream = null;
         let extractedData = {};
 
+        // ===== DETECÇÃO DE COMPATIBILIDADE =====
+        function checkCameraSupport() {
+            const cameraBtn = document.getElementById('cameraBtn');
+            
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                cameraBtn.innerHTML = '📷 Câmara Não Suportada';
+                cameraBtn.style.backgroundColor = '#6c757d';
+                cameraBtn.onclick = function() {
+                    alert('A câmara não é suportada neste browser. Use a opção "Carregar Foto".');
+                };
+                return false;
+            }
+            
+            return true;
+        }
+
         // ===== INICIALIZAÇÃO =====
         document.addEventListener('DOMContentLoaded', function() {
-            loadGitHubConfig();
-            initializeForm();
-            setupEventListeners();
-            loadRegistos();
-            setupPWA();
-            updateGitHubStatus();
+            console.log('🔧 Inicializando aplicação...');
             
-            // GARANTIR que os botões OCR estão visíveis
-            document.getElementById('cameraButtons').style.display = 'block';
+            // Verificar suporte de câmara
+            checkCameraSupport();
+            
+            // Garantir que estamos na tab correta
+            openTab('novoRegisto');
+            
+            // Mostrar mensagem de boas-vindas
+            setTimeout(() => {
+                console.log('✅ Aplicação carregada - Seção OCR disponível');
+            }, 1000);
         });
+
+        // ===== FUNÇÕES DE TABS =====
+        function openTab(tabName) {
+            console.log('📑 Mudando para tab:', tabName);
+            
+            // Esconder todas as tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remover classe active de todos os botões
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Mostrar a tab selecionada
+            document.getElementById(tabName).classList.add('active');
+            
+            // Ativar o botão correspondente
+            event.currentTarget.classList.add('active');
+            
+            // Se for a tab novoRegisto, garantir que OCR está visível
+            if (tabName === 'novoRegisto') {
+                setTimeout(() => {
+                    document.getElementById('cameraButtons').style.display = 'flex';
+                }, 100);
+            }
+        }
 
         // ===== FUNÇÕES OCR =====
         async function startCamera() {
+            console.log('🎥 Iniciando câmara...');
+            
             try {
                 // Parar câmara anterior se existir
                 if (currentStream) {
                     stopCamera();
                 }
                 
+                // Pedir permissão para a câmara
                 const video = document.getElementById('cameraVideo');
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
-                        facingMode: 'environment',
+                        facingMode: 'environment', // Câmara traseira
                         width: { ideal: 1280 },
                         height: { ideal: 720 }
                     } 
@@ -1377,38 +530,60 @@
                 // Mostrar câmara e ocultar botões
                 document.getElementById('cameraContainer').style.display = 'block';
                 document.getElementById('cameraButtons').style.display = 'none';
+                document.getElementById('ocrResults').style.display = 'none';
+                document.getElementById('ocrPreview').style.display = 'none';
                 
-                showNotification('Câmara ativada. Aponte para a etiqueta e clique em Capturar Foto.', 'success');
+                console.log('✅ Câmara ativada com sucesso');
                 
             } catch (error) {
-                console.error('Erro ao aceder à câmara:', error);
+                console.error('❌ Erro ao aceder à câmara:', error);
+                
+                let errorMessage = 'Erro desconhecido';
                 
                 if (error.name === 'NotAllowedError') {
-                    showNotification('Permissão da câmara negada. Por favor, permita o acesso à câmara.', 'error');
+                    errorMessage = 'Permissão da câmara negada. Por favor, permita o acesso à câmara nas definições do browser.';
                 } else if (error.name === 'NotFoundError') {
-                    showNotification('Nenhuma câmara encontrada no dispositivo.', 'error');
+                    errorMessage = 'Nenhuma câmara encontrada no dispositivo.';
+                } else if (error.name === 'NotSupportedError') {
+                    errorMessage = 'O browser não suporta acesso à câmara.';
+                } else if (error.name === 'NotReadableError') {
+                    errorMessage = 'A câmara está a ser usada por outra aplicação.';
                 } else {
-                    showNotification('Erro ao aceder à câmara: ' + error.message, 'error');
+                    errorMessage = `Erro: ${error.message}`;
                 }
+                
+                alert('❌ ' + errorMessage);
+                
+                // Voltar a mostrar os botões
+                document.getElementById('cameraButtons').style.display = 'flex';
             }
         }
 
         function stopCamera() {
+            console.log('🛑 Parando câmara...');
+            
             if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
+                currentStream.getTracks().forEach(track => {
+                    track.stop();
+                    console.log('📹 Track parada:', track.kind);
+                });
                 currentStream = null;
             }
             
             // Ocultar câmara e mostrar botões
             document.getElementById('cameraContainer').style.display = 'none';
-            document.getElementById('cameraButtons').style.display = 'block';
+            document.getElementById('cameraButtons').style.display = 'flex';
             
             // Limpar o elemento de vídeo
             const video = document.getElementById('cameraVideo');
-            video.srcObject = null;
+            if (video.srcObject) {
+                video.srcObject = null;
+            }
         }
 
         function captureImage() {
+            console.log('📸 Capturando imagem...');
+            
             const video = document.getElementById('cameraVideo');
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
@@ -1417,23 +592,39 @@
             canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             
+            // Converter para blob e processar
             canvas.toBlob(function(blob) {
-                processImage(blob);
+                if (blob) {
+                    processImage(blob);
+                } else {
+                    alert('Erro ao capturar imagem');
+                }
             }, 'image/jpeg', 0.8);
             
             stopCamera();
         }
 
         function handleImageUpload(event) {
+            console.log('📁 Processando upload de imagem...');
+            
             const file = event.target.files[0];
             if (file) {
+                // Verificar se é uma imagem
+                if (!file.type.startsWith('image/')) {
+                    alert('Por favor, selecione um ficheiro de imagem.');
+                    return;
+                }
+                
                 processImage(file);
             }
+            
             // Reset do input para permitir reutilização
             event.target.value = '';
         }
 
         async function processImage(imageBlob) {
+            console.log('🔍 Iniciando processamento OCR...');
+            
             const preview = document.getElementById('ocrPreview');
             const loading = document.getElementById('ocrLoading');
             const results = document.getElementById('ocrResults');
@@ -1447,36 +638,65 @@
             results.style.display = 'none';
             
             try {
-                showNotification('A processar imagem...', 'warning');
+                // Mostrar progresso
+                loading.innerHTML = `
+                    <div class="spinner"></div>
+                    <p>🔍 A analisar imagem...</p>
+                    <p style="color: #6c757d; font-size: 0.9rem;">A processar texto da etiqueta</p>
+                `;
                 
                 // Usar Tesseract.js para OCR
                 const { data: { text } } = await Tesseract.recognize(
                     imageBlob,
                     'por+eng', // Português e Inglês
                     { 
-                        logger: m => console.log(m) 
+                        logger: progress => {
+                            if (progress.status === 'recognizing text') {
+                                const percent = Math.round(progress.progress * 100);
+                                loading.innerHTML = `
+                                    <div class="spinner"></div>
+                                    <p>🔍 A processar texto... ${percent}%</p>
+                                    <p style="color: #6c757d; font-size: 0.9rem;">A extrair dados da etiqueta</p>
+                                `;
+                            }
+                        }
                     }
                 );
                 
-                console.log('Texto extraído:', text);
+                console.log('📝 Texto extraído:', text);
                 extractEquipmentData(text);
                 
             } catch (error) {
-                console.error('Erro no OCR:', error);
-                showNotification('Erro ao processar a imagem. Tente novamente.', 'error');
+                console.error('❌ Erro no OCR:', error);
+                loading.style.display = 'none';
+                results.innerHTML = `
+                    <h4 style="color: var(--danger-color);">❌ Erro ao Processar</h4>
+                    <p>Não foi possível processar a imagem. Tente:</p>
+                    <ul>
+                        <li>Uma foto mais nítida e bem iluminada</li>
+                        <li>Certifique-se que a etiqueta está visível</li>
+                        <li>Evite reflexos e sombras</li>
+                    </ul>
+                    <button class="btn btn-warning" onclick="retryOCR()" style="margin-top: 15px;">
+                        🔄 Tentar Novamente
+                    </button>
+                `;
+                results.style.display = 'block';
             } finally {
                 loading.style.display = 'none';
             }
         }
 
         function extractEquipmentData(text) {
+            console.log('🔧 Extraindo dados do equipamento...');
+            
             extractedData = {};
-            const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+            const upperText = text.toUpperCase();
             
             // Procurar marca
             const marcas = ['GREE', 'DAIKIN', 'MITSUBISHI', 'LG', 'SAMSUNG', 'FUJITSU', 'PANASONIC', 'CARRIER', 'TRANE'];
             for (const marca of marcas) {
-                if (text.toUpperCase().includes(marca)) {
+                if (upperText.includes(marca)) {
                     extractedData.marca = marca;
                     break;
                 }
@@ -1501,8 +721,7 @@
             const serialPatterns = [
                 /Serial No\.?[\s:]*([^\n]+)/i,
                 /N[º°]?[\s]*S[ée]rie[\s:]*([^\n]+)/i,
-                /SERIAL[\s:]*([^\n]+)/i,
-                /N[º°]?[\s]*SERIAL[\s:]*([^\n]+)/i
+                /SERIAL[\s:]*([^\n]+)/i
             ];
             
             for (const pattern of serialPatterns) {
@@ -1514,77 +733,48 @@
             }
             
             // Procurar potências
-            const coolingPatterns = [
-                /Cooling Capacity[\s:]*([\d.,]+)\s*kW/i,
-                /Capacidade de Arrefecimento[\s:]*([\d.,]+)\s*kW/i,
-                /Potência Fria[\s:]*([\d.,]+)\s*kW/i,
-                /Cooling[\s:]*([\d.,]+)\s*kW/i
-            ];
-            
-            const heatingPatterns = [
-                /Heating Capacity[\s:]*([\d.,]+)\s*kW/i,
-                /Capacidade de Aquecimento[\s:]*([\d.,]+)\s*kW/i,
-                /Potência Calor[\s:]*([\d.,]+)\s*kW/i,
-                /Heating[\s:]*([\d.,]+)\s*kW/i
-            ];
-            
-            for (const pattern of coolingPatterns) {
-                const match = text.match(pattern);
-                if (match) {
-                    extractedData.potenciaFrio = parseFloat(match[1].replace(',', '.'));
-                    break;
-                }
+            const coolingMatch = text.match(/Cooling Capacity[\s:]*([\d.,]+)\s*kW/i);
+            if (coolingMatch) {
+                extractedData.potenciaFrio = parseFloat(coolingMatch[1].replace(',', '.'));
             }
             
-            for (const pattern of heatingPatterns) {
-                const match = text.match(pattern);
-                if (match) {
-                    extractedData.potenciaCalor = parseFloat(match[1].replace(',', '.'));
-                    break;
-                }
+            const heatingMatch = text.match(/Heating Capacity[\s:]*([\d.,]+)\s*kW/i);
+            if (heatingMatch) {
+                extractedData.potenciaCalor = parseFloat(heatingMatch[1].replace(',', '.'));
             }
             
-            // Procurar ano de fabrico
-            const yearPattern = /(20\d{2})\.?\s*(0[1-9]|1[0-2])/;
-            const yearMatch = text.match(yearPattern);
+            // Procurar ano
+            const yearMatch = text.match(/20\d{2}/);
             if (yearMatch) {
-                extractedData.anoFabrico = yearMatch[1];
+                extractedData.anoFabrico = yearMatch[0];
             }
             
-            // Procurar tipo de fluido
-            if (text.toUpperCase().includes('R32') || text.includes('R-32')) {
+            // Procurar fluido
+            if (upperText.includes('R32') || upperText.includes('R-32')) {
                 extractedData.fluido = 'R-32';
-            } else if (text.toUpperCase().includes('R410') || text.includes('R-410')) {
+            } else if (upperText.includes('R410') || upperText.includes('R-410')) {
                 extractedData.fluido = 'R-410A';
-            } else if (text.toUpperCase().includes('R22') || text.includes('R-22')) {
+            } else if (upperText.includes('R22') || upperText.includes('R-22')) {
                 extractedData.fluido = 'R-22';
-            } else if (text.toUpperCase().includes('R134') || text.includes('R-134')) {
-                extractedData.fluido = 'R-134a';
-            }
-            
-            // Procurar carga de refrigerante
-            const refrigerantPattern = /Refrigerant Charge[\s:]*([\d.,]+)\s*kg/i;
-            const refrigerantMatch = text.match(refrigerantPattern);
-            if (refrigerantMatch) {
-                extractedData.cargaRefrigerante = parseFloat(refrigerantMatch[1].replace(',', '.'));
             }
             
             displayExtractedData();
         }
 
         function displayExtractedData() {
+            console.log('📊 Mostrando dados extraídos:', extractedData);
+            
             const resultsDiv = document.getElementById('extractedData');
-            let html = '<div style="font-size: 0.95rem; line-height: 1.5;">';
+            let html = '<div style="font-size: 1rem; line-height: 1.8;">';
             
             const fields = [
-                { key: 'marca', label: 'Marca' },
-                { key: 'modelo', label: 'Modelo' },
-                { key: 'numeroSerie', label: 'Nº Série' },
-                { key: 'potenciaFrio', label: 'Potência Frio', suffix: ' kW' },
-                { key: 'potenciaCalor', label: 'Potência Calor', suffix: ' kW' },
-                { key: 'anoFabrico', label: 'Ano Fabrico' },
-                { key: 'fluido', label: 'Fluido' },
-                { key: 'cargaRefrigerante', label: 'Carga Refrigerante', suffix: ' kg' }
+                { key: 'marca', label: 'Marca', icon: '🏷️' },
+                { key: 'modelo', label: 'Modelo', icon: '📋' },
+                { key: 'numeroSerie', label: 'Nº Série', icon: '🔢' },
+                { key: 'potenciaFrio', label: 'Potência Frio', icon: '❄️', suffix: ' kW' },
+                { key: 'potenciaCalor', label: 'Potência Calor', icon: '🔥', suffix: ' kW' },
+                { key: 'anoFabrico', label: 'Ano Fabrico', icon: '📅' },
+                { key: 'fluido', label: 'Fluido', icon: '💧' }
             ];
             
             let foundData = false;
@@ -1592,444 +782,98 @@
             fields.forEach(field => {
                 if (extractedData[field.key]) {
                     foundData = true;
-                    html += `<p><strong>${field.label}:</strong> ${extractedData[field.key]}${field.suffix || ''}</p>`;
+                    html += `<p>${field.icon} <strong>${field.label}:</strong> ${extractedData[field.key]}${field.suffix || ''}</p>`;
                 }
             });
             
             if (!foundData) {
-                html += '<p style="color: #e74c3c; font-style: italic;">Não foi possível extrair dados da etiqueta. Tente uma foto mais nítida e bem iluminada.</p>';
+                html = `
+                    <div style="text-align: center; padding: 20px;">
+                        <p style="color: var(--warning-color); font-size: 1.1rem;">🤔 Não foram encontrados dados</p>
+                        <p style="color: #6c757d;">Tente uma foto mais nítida da etiqueta completa</p>
+                    </div>
+                `;
             } else {
-                showNotification('Dados extraídos com sucesso!', 'success');
+                html += '<div style="margin-top: 20px; padding: 15px; background: #d4edda; border-radius: 6px; text-align: center;">';
+                html += '<p style="color: #155724; font-weight: 600;">✅ Dados extraídos com sucesso!</p>';
+                html += '</div>';
             }
             
             html += '</div>';
             resultsDiv.innerHTML = html;
             
             document.getElementById('ocrResults').style.display = 'block';
+            
+            // Scroll para os resultados
+            document.getElementById('ocrResults').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
         }
 
         function applyExtractedData() {
+            console.log('📝 Aplicando dados ao formulário:', extractedData);
+            
             let appliedCount = 0;
 
-            // Aplicar marca
+            // Aplicar aos campos de display
             if (extractedData.marca) {
-                const brandSelect = document.getElementById('brand');
-                const option = Array.from(brandSelect.options).find(opt => 
-                    opt.value.toUpperCase() === extractedData.marca.toUpperCase()
-                );
-                
-                if (option) {
-                    brandSelect.value = option.value;
-                    appliedCount++;
-                } else {
-                    brandSelect.value = 'outra';
-                    document.getElementById('otherBrand').value = extractedData.marca;
-                    document.getElementById('otherBrand').style.display = 'block';
-                    appliedCount++;
-                }
+                document.getElementById('displayMarca').textContent = extractedData.marca;
+                appliedCount++;
             }
             
-            // Aplicar modelo
             if (extractedData.modelo) {
-                document.getElementById('model').value = extractedData.modelo;
+                document.getElementById('displayModelo').textContent = extractedData.modelo;
                 appliedCount++;
             }
             
-            // Aplicar número de série
             if (extractedData.numeroSerie) {
-                const serialInputs = document.querySelectorAll('input[name="serialNumber[]"]');
-                if (serialInputs[0]) {
-                    serialInputs[0].value = extractedData.numeroSerie;
-                    appliedCount++;
-                }
-            }
-            
-            // Aplicar ano de fabrico
-            if (extractedData.anoFabrico) {
-                document.getElementById('manufactureYear').value = extractedData.anoFabrico;
+                document.getElementById('displaySerie').textContent = extractedData.numeroSerie;
                 appliedCount++;
             }
             
-            // Aplicar potências
             if (extractedData.potenciaFrio) {
-                document.getElementById('coldPower').value = extractedData.potenciaFrio;
+                document.getElementById('displayFrio').textContent = extractedData.potenciaFrio;
                 appliedCount++;
             }
             
             if (extractedData.potenciaCalor) {
-                document.getElementById('heatPower').value = extractedData.potenciaCalor;
+                document.getElementById('displayCalor').textContent = extractedData.potenciaCalor;
                 appliedCount++;
             }
             
-            // Aplicar fluido
-            if (extractedData.fluido) {
-                document.getElementById('existingFluid').value = extractedData.fluido;
-                document.getElementById('loadedFluidType').value = extractedData.fluido;
-                appliedCount++;
-            }
-            
-            // Aplicar carga de refrigerante
-            if (extractedData.cargaRefrigerante) {
-                document.getElementById('nominalFluidQuantity').value = extractedData.cargaRefrigerante;
-                appliedCount++;
-            }
-            
-            showNotification(`${appliedCount} campos preenchidos automaticamente!`, 'success');
-            document.getElementById('ocrResults').style.display = 'none';
-            
-            // Fazer scroll para o topo do formulário para ver os campos preenchidos
-            document.getElementById('interventionForm').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // ===== FUNÇÕES RESTANTES (mantenha as suas funções originais) =====
-        function loadGitHubConfig() {
-            const config = localStorage.getItem(GITHUB_CONFIG_KEY);
-            githubConfig = config ? JSON.parse(config) : null;
-            updateGitHubStatus();
-        }
-
-        function saveGitHubConfig() {
-            const token = document.getElementById('githubToken').value;
-            const repo = document.getElementById('repoName').value;
-            
-            if (!token || !repo) {
-                showNotification('Preencha todos os campos', 'error');
-                return;
-            }
-            
-            if (!token.startsWith('ghp_')) {
-                showNotification('Token inválido. Deve começar com "ghp_"', 'error');
-                return;
-            }
-            
-            const [owner, repoName] = repo.split('/');
-            if (!owner || !repoName) {
-                showNotification('Formato do repositório inválido. Use: username/nome-repositorio', 'error');
-                return;
-            }
-            
-            githubConfig = {
-                token: token,
-                repo: repo,
-                owner: owner,
-                repoName: repoName
-            };
-            
-            localStorage.setItem(GITHUB_CONFIG_KEY, JSON.stringify(githubConfig));
-            closeModal('githubLoginModal');
-            showNotification('Configuração GitHub guardada!', 'success');
-            updateGitHubStatus();
-        }
-
-        function clearGitHubConfig() {
-            githubConfig = null;
-            localStorage.removeItem(GITHUB_CONFIG_KEY);
-            closeModal('githubLoginModal');
-            showNotification('Configuração GitHub removida!', 'warning');
-            updateGitHubStatus();
-        }
-
-        function updateGitHubStatus() {
-            const statusDot = document.getElementById('githubStatusDot');
-            const statusText = document.getElementById('githubStatusText');
-            
-            if (githubConfig) {
-                statusDot.className = 'status-dot';
-                statusText.textContent = 'GitHub Conectado';
-            } else {
-                statusDot.className = 'status-dot offline';
-                statusText.textContent = 'GitHub Offline';
-            }
-        }
-
-        function initializeForm() {
-            // Preencher anos para o campo "Ano de Fabrico"
-            const yearSelect = document.getElementById('manufactureYear');
-            const currentYear = new Date().getFullYear();
-            
-            for (let year = currentYear; year >= 1980; year--) {
-                const option = document.createElement('option');
-                option.value = year;
-                option.textContent = year;
-                yearSelect.appendChild(option);
-            }
-            
-            // Definir data atual como padrão
-            document.getElementById('interventionDate').valueAsDate = new Date();
-            
-            // Inicialmente ocultar estes campos
-            document.getElementById('otherBrand').style.display = 'none';
-            document.getElementById('otherIntervention').style.display = 'none';
-            document.getElementById('destructionRecipient').style.display = 'none';
-        }
-
-        function setupEventListeners() {
-            // Botões de números de série
-            document.querySelector('.add-serial-btn').addEventListener('click', addSerialNumber);
-            
-            // Modal buttons
-            document.querySelector('#detalhesRegistoModal .close-modal').addEventListener('click', () => closeModal('detalhesRegistoModal'));
-            document.querySelector('#validacaoModal .close-modal').addEventListener('click', () => closeModal('validacaoModal'));
-            document.querySelector('#eliminarRegistoModal .close-modal').addEventListener('click', () => closeModal('eliminarRegistoModal'));
-            document.querySelector('#githubLoginModal .close-modal').addEventListener('click', () => closeModal('githubLoginModal'));
-            
-            // Botões de ação do formulário
-            document.querySelector('.btn-duplicate').addEventListener('click', duplicateForm);
-            document.querySelector('#cancelEditButton').addEventListener('click', cancelEdit);
-            
-            // Botões de eliminação
-            document.getElementById('confirmarEliminacao').addEventListener('click', eliminarRegisto);
-            
-            // Campos dinâmicos
-            document.getElementById('brand').addEventListener('change', function() {
-                const otherBrandInput = document.getElementById('otherBrand');
-                if (this.value === 'outra') {
-                    otherBrandInput.style.display = 'block';
-                    otherBrandInput.required = true;
-                } else {
-                    otherBrandInput.style.display = 'none';
-                    otherBrandInput.required = false;
-                    otherBrandInput.value = '';
-                }
-            });
-            
-            document.querySelector('input[value="outra"]').addEventListener('change', function() {
-                document.getElementById('otherIntervention').style.display = this.checked ? 'block' : 'none';
-            });
-            
-            document.querySelector('input[value="destruicao"]').addEventListener('change', function() {
-                document.getElementById('destructionRecipient').style.display = this.checked ? 'block' : 'none';
-            });
-        }
-
-        function openTab(tabName) {
-            // Esconder todas as tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Remover classe active de todos os botões
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Mostrar a tab selecionada
-            document.getElementById(tabName).classList.add('active');
-        }
-
-        function novoRegisto() {
-            resetForm();
-            openTab('novoRegisto');
-        }
-
-        function resetForm() {
-            document.getElementById('interventionForm').reset();
-            document.getElementById('interventionDate').valueAsDate = new Date();
-            document.getElementById('editRegistoId').value = '';
-            
-            // Reset números de série
-            const serialContainer = document.getElementById('serialNumbersContainer');
-            serialContainer.innerHTML = `
-                <div class="serial-number-entry">
-                    <select name="serialType[]">
-                        <option value="UI">UI - Unidade Interior</option>
-                        <option value="UE">UE - Unidade Exterior</option>
-                    </select>
-                    <input type="text" name="serialNumber[]" placeholder="Número de série" required>
-                    <button type="button" class="remove-serial-btn">×</button>
+            // Mostrar confirmação
+            const resultsDiv = document.getElementById('extractedData');
+            resultsDiv.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <p style="color: var(--success-color); font-size: 1.2rem; font-weight: 600;">🎉 ${appliedCount} campos preenchidos!</p>
+                    <p style="color: #495057;">Os dados foram aplicados ao formulário com sucesso.</p>
                 </div>
             `;
             
-            // Reconfigurar event listeners para os novos botões
-            setupSerialNumberListeners();
-            
-            // Reset checkboxes
-            document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-                cb.checked = false;
-            });
-            
-            // Ocultar campos especiais
-            document.getElementById('otherBrand').style.display = 'none';
-            document.getElementById('otherIntervention').style.display = 'none';
-            document.getElementById('destructionRecipient').style.display = 'none';
-            
-            // Reset OCR - GARANTIR que os botões estão visíveis
-            document.getElementById('ocrPreview').style.display = 'none';
-            document.getElementById('ocrResults').style.display = 'none';
-            document.getElementById('cameraContainer').style.display = 'none';
-            document.getElementById('cameraButtons').style.display = 'block';
-            extractedData = {};
-            
-            // Modo normal (não edição)
-            isEditMode = false;
-            document.getElementById('editModeBanner').style.display = 'none';
-            document.getElementById('formTitle').textContent = 'Novo Registo de Intervenção';
-            document.getElementById('submitButton').textContent = 'Submeter Registo';
-            document.getElementById('cancelEditButton').style.display = 'none';
-        }
-
-        function setupSerialNumberListeners() {
-            document.querySelectorAll('.remove-serial-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    removeSerialNumber(this);
-                });
-            });
-        }
-
-        function addSerialNumber() {
-            const container = document.getElementById('serialNumbersContainer');
-            const newEntry = document.createElement('div');
-            newEntry.className = 'serial-number-entry';
-            newEntry.innerHTML = `
-                <select name="serialType[]">
-                    <option value="UI">UI - Unidade Interior</option>
-                    <option value="UE">UE - Unidade Exterior</option>
-                </select>
-                <input type="text" name="serialNumber[]" placeholder="Número de série" required>
-                <button type="button" class="remove-serial-btn">×</button>
-            `;
-            container.appendChild(newEntry);
-            
-            // Configurar listener para o novo botão
-            newEntry.querySelector('.remove-serial-btn').addEventListener('click', function() {
-                removeSerialNumber(this);
-            });
-        }
-        
-        function removeSerialNumber(button) {
-            const entries = document.querySelectorAll('.serial-number-entry');
-            if (entries.length > 1) {
-                button.parentElement.remove();
-            } else {
-                showNotification('É necessário pelo menos um número de série.', 'warning');
-            }
-        }
-
-        // ... [Continue com todas as outras funções do seu código original]
-
-        function showNotification(message, type) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification ${type} show`;
-            
+            // Ocultar após alguns segundos
             setTimeout(() => {
-                notification.classList.remove('show');
-            }, 4000);
+                document.getElementById('ocrResults').style.display = 'none';
+                document.getElementById('ocrPreview').style.display = 'none';
+            }, 3000);
         }
 
-        function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'flex';
+        function retryOCR() {
+            console.log('🔄 Reiniciando OCR...');
+            document.getElementById('ocrResults').style.display = 'none';
+            document.getElementById('ocrPreview').style.display = 'none';
+            document.getElementById('cameraButtons').style.display = 'flex';
         }
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
+        function showManualEntry() {
+            alert('📝 Modo de preenchimento manual selecionado.\nPreencha os campos do formulário abaixo.');
         }
 
-        // ===== PWA FUNCTIONALITY =====
-        let deferredPrompt;
-
-        function setupPWA() {
-            if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('./sw.js')
-                        .then(registration => {
-                            console.log('ServiceWorker registrado com sucesso: ', registration.scope);
-                        })
-                        .catch(error => {
-                            console.log('Falha no registro do ServiceWorker: ', error);
-                        });
-                });
-
-                window.addEventListener('online', () => {
-                    showNotification('Conexão restaurada', 'success');
-                });
-
-                window.addEventListener('offline', () => {
-                    showNotification('Modo offline ativado', 'warning');
-                });
-            }
-
-            // Botão de instalação PWA
-            const installButton = document.getElementById('installButton');
-            
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredPrompt = e;
-                installButton.style.display = 'block';
-            });
-
-            installButton.addEventListener('click', async () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    if (outcome === 'accepted') {
-                        installButton.style.display = 'none';
-                        showNotification('Aplicação instalada com sucesso!', 'success');
-                    }
-                    deferredPrompt = null;
-                }
-            });
-
-            window.addEventListener('appinstalled', () => {
-                installButton.style.display = 'none';
-                deferredPrompt = null;
-            });
-        }
-
-        // ===== FUNÇÕES BÁSICAS DE DADOS =====
-        async function loadRegistos() {
-            const localData = localStorage.getItem(STORAGE_KEY);
-            if (localData) {
-                registos = JSON.parse(localData);
-            } else {
-                // Dados de exemplo
-                registos = [
-                    {
-                        id: 1,
-                        data: '2025-09-30',
-                        cliente: 'Empresa ABC, Lda',
-                        tecnico: 'Marco Pinheiro',
-                        equipamento: 'Ar Condicionado - Split',
-                        marca: 'Daikin',
-                        modelo: 'FTXS35K',
-                        numerosSerie: ['UI: 123456', 'UE: 789012'],
-                        estado: 'pendente',
-                        potenciaEletrica: 2.5,
-                        potenciaCalor: 3.2,
-                        potenciaFrio: 3.0,
-                        fluido: 'R-410A',
-                        intervencoes: ['Instalação', 'Carga c/ Fluido']
-                    }
-                ];
-                await saveRegistos();
-            }
-            
-            updateUI();
-        }
-
-        async function saveRegistos() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(registos));
-            updateUI();
-        }
-
-        function updateUI() {
-            updateStats();
-            renderRegistosTable();
-            renderRecentRegistos();
-        }
-
-        function updateStats() {
-            const total = registos.length;
-            const pendentes = registos.filter(r => r.estado === 'pendente').length;
-            const validados = registos.filter(r => r.estado === 'validado').length;
-            
-            document.getElementById('totalRegistos').textContent = total;
-            document.getElementById('pendentesValidacao').textContent = pendentes;
-            document.getElementById('registosValidados').textContent = validados;
-        }
-
-        // ... [Adicione as funções restantes conforme necessário]
-
+        // Forçar abertura da tab novoRegisto para demonstração
+        setTimeout(() => {
+            // Simular clique na tab novoRegisto
+            document.querySelector('.nav-tab[onclick="openTab(\'novoRegisto\')"]').click();
+        }, 500);
     </script>
 </body>
 </html>
