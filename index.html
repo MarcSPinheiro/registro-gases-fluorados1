@@ -799,6 +799,19 @@
             font-size: 0.9rem;
         }
         
+        .debug-info {
+            background: #2c3e50;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+        
         @media (max-width: 768px) {
             header {
                 flex-direction: column;
@@ -1021,8 +1034,8 @@
                         </p>
                         
                         <div class="barcode-hint">
-                            💡 <strong>Dica:</strong> O número de série está normalmente <strong>abaixo do código de barras</strong>. 
-                            Fotografe essa área com boa iluminação.
+                            💡 <strong>Dica IMPORTANTE:</strong> O número de série está normalmente <strong>DIRETAMENTE ABAIXO do código de barras</strong>. 
+                            Fotografe essa área com boa iluminação e foco.
                         </div>
                         
                         <!-- Galeria de Fotos -->
@@ -1066,6 +1079,15 @@
                             <button class="btn btn-warning" onclick="processAllPhotos()" id="processAllBtn" style="display: none;">
                                 🔍 Processar Todas as Fotos
                             </button>
+                            <button class="btn btn-info" onclick="toggleDebugInfo()" id="debugBtn">
+                                🐛 Debug Info
+                            </button>
+                        </div>
+
+                        <!-- Informações de Debug -->
+                        <div id="debugInfo" class="debug-info">
+                            <strong>Informações de Debug:</strong>
+                            <div id="debugContent"></div>
                         </div>
                         
                         <!-- Loading -->
@@ -1479,6 +1501,7 @@
         let currentStream = null;
         let extractedData = {};
         let isProcessing = false;
+        let debugMode = false;
 
         // ===== INICIALIZAÇÃO =====
         document.addEventListener('DOMContentLoaded', function() {
@@ -1504,7 +1527,33 @@
             }
         }
 
-        // ===== FUNÇÕES OCR MELHORADAS =====
+        // ===== FUNÇÕES DEBUG =====
+        function toggleDebugInfo() {
+            debugMode = !debugMode;
+            const debugInfo = document.getElementById('debugInfo');
+            const debugBtn = document.getElementById('debugBtn');
+            
+            if (debugMode) {
+                debugInfo.style.display = 'block';
+                debugBtn.innerHTML = '🐛 Debug ON';
+                debugBtn.style.backgroundColor = '#e74c3c';
+            } else {
+                debugInfo.style.display = 'none';
+                debugBtn.innerHTML = '🐛 Debug Info';
+                debugBtn.style.backgroundColor = '';
+            }
+        }
+
+        function addDebugInfo(message) {
+            if (!debugMode) return;
+            
+            const debugContent = document.getElementById('debugContent');
+            const timestamp = new Date().toLocaleTimeString();
+            debugContent.innerHTML += `[${timestamp}] ${message}<br>`;
+            debugContent.scrollTop = debugContent.scrollHeight;
+        }
+
+        // ===== FUNÇÕES OCR CORRIGIDAS =====
         async function startCamera() {
             try {
                 if (currentStream) {
@@ -1515,8 +1564,8 @@
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         facingMode: 'environment',
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
                     } 
                 });
                 
@@ -1526,11 +1575,13 @@
                 document.getElementById('cameraContainer').style.display = 'block';
                 document.getElementById('cameraButtons').style.display = 'none';
                 
-                showNotification('Câmara ativada. Aponte para o número de série abaixo do código de barras.', 'success');
+                showNotification('Câmara ativada. Fotografe o número de série ABAIXO do código de barras.', 'success');
+                addDebugInfo('Câmara iniciada com alta resolução');
                 
             } catch (error) {
                 console.error('Erro ao aceder à câmara:', error);
                 showNotification('Erro ao aceder à câmara: ' + error.message, 'error');
+                addDebugInfo('ERRO Câmara: ' + error.message);
             }
         }
 
@@ -1545,6 +1596,7 @@
             
             const video = document.getElementById('cameraVideo');
             video.srcObject = null;
+            addDebugInfo('Câmara parada');
         }
 
         function captureImage() {
@@ -1560,20 +1612,29 @@
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // Aumentar a resolução para melhor OCR
+            canvas.width = video.videoWidth * 2;
+            canvas.height = video.videoHeight * 2;
+            context.scale(2, 2);
+            context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
             
             canvas.toBlob(function(blob) {
                 addPhotoToGallery(blob);
                 if (!continueShooting) {
                     stopCamera();
                 }
-            }, 'image/jpeg', 0.8);
+            }, 'image/jpeg', 0.9); // Melhor qualidade
+            
+            addDebugInfo('Foto capturada (resolução: ' + canvas.width + 'x' + canvas.height + ')');
         }
 
         function handleMultipleImageUpload(event) {
             const files = Array.from(event.target.files);
+            if (files.length > 0) {
+                showNotification(`A carregar ${files.length} foto(s)...`, 'warning');
+                addDebugInfo(`A carregar ${files.length} ficheiros`);
+            }
+            
             files.forEach(file => {
                 if (file.type.startsWith('image/')) {
                     addPhotoToGallery(file);
@@ -1593,7 +1654,8 @@
             
             allPhotos.push(photoObject);
             updatePhotoGallery();
-            showNotification('Foto adicionada com sucesso!', 'success');
+            showNotification('Foto adicionada! Processe-a para extrair dados.', 'success');
+            addDebugInfo('Foto adicionada à galeria: ' + photoId);
         }
 
         function updatePhotoGallery() {
@@ -1628,6 +1690,7 @@
             event.stopPropagation();
             allPhotos = allPhotos.filter(photo => photo.id !== photoId);
             updatePhotoGallery();
+            addDebugInfo('Foto removida: ' + photoId);
         }
 
         async function processAllPhotos() {
@@ -1646,17 +1709,24 @@
             document.getElementById('ocrLoading').style.display = 'block';
             document.getElementById('loadingText').textContent = `A processar ${unprocessedPhotos.length} foto(s)...`;
             
+            addDebugInfo(`Iniciando processamento de ${unprocessedPhotos.length} fotos`);
+            
             try {
+                let processedCount = 0;
                 for (const photo of unprocessedPhotos) {
                     await processSinglePhotoInternal(photo);
+                    processedCount++;
+                    document.getElementById('loadingText').textContent = `Processadas ${processedCount} de ${unprocessedPhotos.length} fotos...`;
                 }
                 
-                showNotification(`Processadas ${unprocessedPhotos.length} fotos com sucesso!`, 'success');
+                showNotification(`✅ Processadas ${unprocessedPhotos.length} fotos com sucesso!`, 'success');
                 updateExtractedDataSummary();
+                addDebugInfo(`Processamento concluído: ${processedCount} fotos processadas`);
                 
             } catch (error) {
                 console.error('Erro no processamento:', error);
-                showNotification('Erro no processamento de algumas fotos', 'error');
+                showNotification('❌ Erro no processamento de algumas fotos', 'error');
+                addDebugInfo('ERRO Processamento: ' + error.message);
             } finally {
                 isProcessing = false;
                 document.getElementById('ocrLoading').style.display = 'none';
@@ -1676,13 +1746,16 @@
             document.getElementById('ocrLoading').style.display = 'block';
             document.getElementById('loadingText').textContent = 'A processar foto...';
             
+            addDebugInfo(`Processando foto: ${photoId}`);
+            
             try {
                 await processSinglePhotoInternal(photo);
-                showNotification('Foto processada com sucesso!', 'success');
+                showNotification('✅ Foto processada com sucesso!', 'success');
                 updateExtractedDataSummary();
             } catch (error) {
                 console.error('Erro no processamento:', error);
-                showNotification('Erro ao processar a foto', 'error');
+                showNotification('❌ Erro ao processar a foto', 'error');
+                addDebugInfo('ERRO Processamento individual: ' + error.message);
             } finally {
                 document.getElementById('ocrLoading').style.display = 'none';
                 updatePhotoGallery();
@@ -1690,88 +1763,175 @@
         }
 
         async function processSinglePhotoInternal(photo) {
-            const { data: { text, confidence } } = await Tesseract.recognize(
+            addDebugInfo(`Iniciando OCR para foto ${photo.id}`);
+            
+            // Configurações melhoradas para o Tesseract
+            const { data: { text, confidence, lines } } = await Tesseract.recognize(
                 photo.blob,
                 'por+eng',
                 { 
-                    logger: m => console.log(m)
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            addDebugInfo(`OCR Progresso: ${Math.round(m.progress * 100)}%`);
+                        }
+                    },
+                    tessedit_pageseg_mode: '6', // Modo uniforme de bloco de texto
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-/.+ ',
+                    preserve_interword_spaces: '1'
                 }
             );
             
-            console.log('Texto extraído da foto:', text);
-            const extracted = extractEquipmentDataFromText(text);
+            addDebugInfo(`OCR concluído - Confiança: ${Math.round(confidence)}%`);
+            addDebugInfo(`Texto extraído: "${text.substring(0, 100)}..."`);
+            
+            const extracted = extractEquipmentDataFromText(text, lines);
             extracted.confidence = confidence;
             extracted.sourcePhoto = photo.id;
             
             photo.data = extracted;
             photo.processed = true;
             
-            // Combinar dados com os já existentes
+            // Combinar dados com os já existentes (mantém o melhor)
             mergeExtractedData(extracted);
+            
+            addDebugInfo(`Dados extraídos: ${JSON.stringify(extracted)}`);
         }
 
-        function extractEquipmentDataFromText(text) {
+        function extractEquipmentDataFromText(text, lines = []) {
             const result = {};
-            const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+            const cleanText = text.replace(/\s+/g, ' ').trim();
             
-            // MELHOR DETECÇÃO DE NÚMERO DE SÉRIE - Procura padrões comuns
+            addDebugInfo('Iniciando extração de dados do texto');
+
+            // 1. NÚMERO DE SÉRIE - Estratégia Melhorada
+            addDebugInfo('--- Procurando Número de Série ---');
+            
+            // Estratégia 1: Procurar padrões específicos de número de série
             const serialPatterns = [
-                /Serial No\.?[\s:]*([A-Z0-9\-]{5,})/i,
-                /N[º°]?[\s]*S[ée]rie[\s:]*([A-Z0-9\-]{5,})/i,
-                /SERIAL[\s:]*([A-Z0-9\-]{5,})/i,
-                /N[º°]?[\s]*SERIAL[\s:]*([A-Z0-9\-]{5,})/i,
-                /SN[\s:]*([A-Z0-9\-]{5,})/i,
-                /([A-Z]{2,3}[0-9]{8,})/, // Padrão comum: letras + números
-                /([0-9]{3}[A-Z]{2}[0-9]{5})/, // Outro padrão comum
-                /([A-Z0-9]{10,})/ // Qualquer combinação longa de letras e números
+                // Padrões com prefixos comuns
+                /S\/N[\s:]*([A-Z0-9]{8,15})/i,
+                /Serial No\.?[\s:]*([A-Z0-9]{8,15})/i,
+                /N[º°]?[\s]*S[ée]rie[\s:]*([A-Z0-9]{8,15})/i,
+                /SERIAL[\s:]*([A-Z0-9]{8,15})/i,
+                /SN[\s:]*([A-Z0-9]{8,15})/i,
+                
+                // Padrões gerais (último recurso)
+                /([A-Z]{2,3}[0-9]{8,12})/,
+                /([0-9]{3}[A-Z]{2}[0-9]{5,8})/,
+                /([A-Z0-9]{10,15})/
             ];
-            
+
             for (const pattern of serialPatterns) {
-                const match = text.match(pattern);
-                if (match && match[1]) {
-                    result.numeroSerie = match[1].trim();
-                    break;
+                const matches = cleanText.match(pattern);
+                if (matches && matches[1]) {
+                    const candidate = matches[1].trim();
+                    addDebugInfo('Candidato a número de série encontrado: ' + candidate);
+                    
+                    // Validar: não deve ser um ano, não deve conter apenas números sequenciais
+                    if (!/^20\d{2}$/.test(candidate) && !/^\d+$/.test(candidate)) {
+                        result.numeroSerie = candidate;
+                        addDebugInfo('✅ Número de série aceite: ' + candidate);
+                        break;
+                    }
                 }
             }
-            
-            // Procurar marca - lista expandida
+
+            // Estratégia 2: Analisar linhas individuais para encontrar números abaixo de códigos de barras
+            if (!result.numeroSerie && lines.length > 0) {
+                addDebugInfo('--- Analisando linhas para código de barras ---');
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].text;
+                    
+                    // Procurar linhas que possam ser código de barras (muitos números)
+                    if (line.replace(/[^0-9]/g, '').length > 8) {
+                        addDebugInfo('Possível linha de código de barras: ' + line);
+                        
+                        // A linha seguinte pode ser o número de série
+                        if (i + 1 < lines.length) {
+                            const nextLine = lines[i + 1].text.trim();
+                            addDebugInfo('Linha seguinte (possível número de série): ' + nextLine);
+                            
+                            if (nextLine.length >= 8 && nextLine.length <= 15) {
+                                result.numeroSerie = nextLine;
+                                addDebugInfo('✅ Número de série da linha seguinte: ' + nextLine);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. MARCA - Lista Expandida e Melhor Deteção
+            addDebugInfo('--- Procurando Marca ---');
             const marcas = [
                 'GREE', 'DAIKIN', 'MITSUBISHI', 'LG', 'SAMSUNG', 'FUJITSU', 
                 'PANASONIC', 'CARRIER', 'TRANE', 'TOSHIBA', 'HITACHI', 'WHIRLPOOL',
-                'ELECTROLUX', 'BOSCH', 'SIEMENS', 'ARISTON', 'BAUKNECHT', 'COMFEE'
+                'ELECTROLUX', 'BOSCH', 'SIEMENS', 'ARISTON', 'BAUKNECHT', 'COMFEE',
+                'AUX', 'HAIER', 'MIDEA', 'CHIGO', 'TCL', 'SHARP', 'YORK', 'LENNOX'
             ];
             
             for (const marca of marcas) {
-                if (text.toUpperCase().includes(marca)) {
+                if (cleanText.toUpperCase().includes(marca)) {
                     result.marca = marca;
+                    addDebugInfo('✅ Marca encontrada: ' + marca);
                     break;
                 }
             }
-            
-            // Procurar modelo - padrões melhorados
+
+            // 3. MODELO - Extração Melhorada para Modelo Completo
+            addDebugInfo('--- Procurando Modelo ---');
             const modelPatterns = [
-                /Model[o]?[\s:]*([A-Z0-9\-\.\+\/]{3,})/i,
-                /Modelo[\s:]*([A-Z0-9\-\.\+\/]{3,})/i,
-                /MODEL[\s:]*([A-Z0-9\-\.\+\/]{3,})/i,
-                /Type[\s:]*([A-Z0-9\-\.\+\/]{3,})/i,
-                /MODELO[\s:]*([A-Z0-9\-\.\+\/]{3,})/i
+                /Model[o]?[\s:]*([A-Z0-9\-\.\+\/\s]{4,20})/i,
+                /Modelo[\s:]*([A-Z0-9\-\.\+\/\s]{4,20})/i,
+                /MODEL[\s:]*([A-Z0-9\-\.\+\/\s]{4,20})/i,
+                /Type[\s:]*([A-Z0-9\-\.\+\/\s]{4,20})/i,
+                /MODELO[\s:]*([A-Z0-9\-\.\+\/\s]{4,20})/i,
+                /Product[\s:]*([A-Z0-9\-\.\+\/\s]{4,20})/i
             ];
             
             for (const pattern of modelPatterns) {
-                const match = text.match(pattern);
+                const match = cleanText.match(pattern);
                 if (match && match[1]) {
-                    result.modelo = match[1].trim();
-                    break;
+                    let modelo = match[1].trim();
+                    
+                    // Limpar o modelo (remover lixo comum)
+                    modelo = modelo.replace(/[^\w\s\-\.\+\/]/g, '').replace(/\s+/g, ' ');
+                    
+                    if (modelo.length >= 3) {
+                        result.modelo = modelo;
+                        addDebugInfo('✅ Modelo encontrado: ' + modelo);
+                        break;
+                    }
                 }
             }
-            
-            // Procurar potências - padrões mais abrangentes
+
+            // Estratégia alternativa para modelo: procurar padrões comuns de modelo
+            if (!result.modelo) {
+                const modelCandidates = cleanText.match(/([A-Z]{1,4}[0-9]{1,3}[A-Z]?[0-9]?[\-\+]?[A-Z0-9]*)/g);
+                if (modelCandidates) {
+                    // Filtrar candidatos plausíveis
+                    const validModels = modelCandidates.filter(m => 
+                        m.length >= 4 && m.length <= 15 && 
+                        !m.match(/^[0-9]+$/) && // Não apenas números
+                        !m.match(/^[A-Z]{1,2}[0-9]{7,}$/) // Não números de série
+                    );
+                    
+                    if (validModels.length > 0) {
+                        result.modelo = validModels[0];
+                        addDebugInfo('✅ Modelo alternativo encontrado: ' + validModels[0]);
+                    }
+                }
+            }
+
+            // 4. POTÊNCIAS - Deteção Melhorada
+            addDebugInfo('--- Procurando Potências ---');
             const coolingPatterns = [
                 /Cooling Capacity[\s:]*([\d.,]+)\s*kW/i,
                 /Capacidade de Arrefecimento[\s:]*([\d.,]+)\s*kW/i,
                 /Potência Fria[\s:]*([\d.,]+)\s*kW/i,
                 /Cooling[\s:]*([\d.,]+)\s*kW/i,
-                /Capacidade Frigorífica[\s:]*([\d.,]+)\s*kW/i
+                /Capacidade Frigorífica[\s:]*([\d.,]+)\s*kW/i,
+                /([\d.,]+)\s*kW.*[Cc]ooling/i
             ];
             
             const heatingPatterns = [
@@ -1779,43 +1939,53 @@
                 /Capacidade de Aquecimento[\s:]*([\d.,]+)\s*kW/i,
                 /Potência Calor[\s:]*([\d.,]+)\s*kW/i,
                 /Heating[\s:]*([\d.,]+)\s*kW/i,
-                /Capacidade Térmica[\s:]*([\d.,]+)\s*kW/i
+                /Capacidade Térmica[\s:]*([\d.,]+)\s*kW/i,
+                /([\d.,]+)\s*kW.*[Hh]eating/i
             ];
             
             for (const pattern of coolingPatterns) {
-                const match = text.match(pattern);
+                const match = cleanText.match(pattern);
                 if (match && match[1]) {
                     result.potenciaFrio = parseFloat(match[1].replace(',', '.'));
+                    addDebugInfo('✅ Potência fria encontrada: ' + result.potenciaFrio);
                     break;
                 }
             }
             
             for (const pattern of heatingPatterns) {
-                const match = text.match(pattern);
+                const match = cleanText.match(pattern);
                 if (match && match[1]) {
                     result.potenciaCalor = parseFloat(match[1].replace(',', '.'));
+                    addDebugInfo('✅ Potência calor encontrada: ' + result.potenciaCalor);
                     break;
                 }
             }
-            
-            // Procurar ano de fabrico - padrões melhorados
+
+            // 5. ANO DE FABRICO
+            addDebugInfo('--- Procurando Ano de Fabrico ---');
             const yearPatterns = [
-                /(20\d{2})\.?\s*(0[1-9]|1[0-2])/,
+                /(20\d{2})/,
                 /Year[\s:]*(\d{4})/i,
                 /Ano[\s:]*(\d{4})/i,
                 /Fabrico[\s:]*(\d{4})/i,
-                /Manufacture[\s:]*(\d{4})/i
+                /Manufacture[\s:]*(\d{4})/i,
+                /(19\d{2})/ // Para equipamentos mais antigos
             ];
             
             for (const pattern of yearPatterns) {
-                const match = text.match(pattern);
+                const match = cleanText.match(pattern);
                 if (match && match[1]) {
-                    result.anoFabrico = match[1];
-                    break;
+                    const year = parseInt(match[1]);
+                    if (year >= 1990 && year <= new Date().getFullYear()) {
+                        result.anoFabrico = match[1];
+                        addDebugInfo('✅ Ano de fabrico encontrado: ' + match[1]);
+                        break;
+                    }
                 }
             }
-            
-            // Procurar tipo de fluido
+
+            // 6. FLUIDO
+            addDebugInfo('--- Procurando Fluido ---');
             const fluidPatterns = {
                 'R-32': /R32|R-32|HFC-32|R\s*32/i,
                 'R-410A': /R410|R-410|R410A|R-410A|Puron/i,
@@ -1826,40 +1996,49 @@
             };
             
             for (const [fluid, pattern] of Object.entries(fluidPatterns)) {
-                if (pattern.test(text)) {
+                if (pattern.test(cleanText)) {
                     result.fluido = fluid;
+                    addDebugInfo('✅ Fluido encontrado: ' + fluid);
                     break;
                 }
             }
-            
-            // Procurar carga de refrigerante
+
+            // 7. CARGA DE REFRIGERANTE
+            addDebugInfo('--- Procurando Carga de Refrigerante ---');
             const refrigerantPatterns = [
                 /Refrigerant Charge[\s:]*([\d.,]+)\s*kg/i,
                 /Carga de Refrigerante[\s:]*([\d.,]+)\s*kg/i,
                 /Gas Charge[\s:]*([\d.,]+)\s*kg/i,
-                /Charge[\s:]*([\d.,]+)\s*kg/i
+                /Charge[\s:]*([\d.,]+)\s*kg/i,
+                /([\d.,]+)\s*kg.*[Rr]efrigerant/i
             ];
             
             for (const pattern of refrigerantPatterns) {
-                const match = text.match(pattern);
+                const match = cleanText.match(pattern);
                 if (match && match[1]) {
                     result.cargaRefrigerante = parseFloat(match[1].replace(',', '.'));
+                    addDebugInfo('✅ Carga de refrigerante encontrada: ' + result.cargaRefrigerante);
                     break;
                 }
             }
-            
+
+            addDebugInfo('=== EXTRAÇÃO CONCLUÍDA ===');
             return result;
         }
 
         function mergeExtractedData(newData) {
-            // Combinar dados de múltiplas fotos
+            // Combinar dados de múltiplas fotos, mantendo os melhores
             Object.keys(newData).forEach(key => {
-                if (newData[key] && !extractedData[key]) {
-                    extractedData[key] = {
-                        value: newData[key],
-                        confidence: newData.confidence,
-                        source: newData.sourcePhoto
-                    };
+                if (newData[key]) {
+                    // Se já existe um valor, mantém o que tem maior confiança
+                    if (!extractedData[key] || newData.confidence > (extractedData[key].confidence || 0)) {
+                        extractedData[key] = {
+                            value: newData[key],
+                            confidence: newData.confidence,
+                            source: newData.sourcePhoto
+                        };
+                        addDebugInfo(`Dado combinado: ${key} = ${newData[key]}`);
+                    }
                 }
             });
         }
@@ -1892,12 +2071,13 @@
             fields.forEach(field => {
                 if (extractedData[field.key]) {
                     foundData = true;
+                    const confidence = extractedData[field.key].confidence ? Math.round(extractedData[field.key].confidence) : 'N/A';
                     html += `
                         <div class="data-field">
                             <div>
                                 <strong>${field.emoji} ${field.label}:</strong> 
                                 ${extractedData[field.key].value}${field.suffix || ''}
-                                <span class="confidence-badge">${Math.round(extractedData[field.key].confidence)}%</span>
+                                <span class="confidence-badge">${confidence}%</span>
                             </div>
                             <span class="field-source">Foto ${allPhotos.findIndex(p => p.id === extractedData[field.key].source) + 1}</span>
                         </div>
@@ -1906,11 +2086,29 @@
             });
             
             if (!foundData) {
-                html += '<p style="color: #e74c3c; font-style: italic;">Não foi possível extrair dados das etiquetas. Tente fotos mais nítidas.</p>';
+                html += `
+                    <div style="text-align: center; padding: 20px;">
+                        <p style="color: #e74c3c; font-style: italic;">
+                            ❌ Não foi possível extrair dados das etiquetas.
+                        </p>
+                        <p style="font-size: 0.8rem; color: #7f8c8d; margin-top: 10px;">
+                            💡 Dicas:<br>
+                            • Fotografe o número de série ABAIXO do código de barras<br>
+                            • Garanta boa iluminação<br>
+                            • Mantenha a câmara estável<br>
+                            • Tente fotografar de diferentes ângulos
+                        </p>
+                    </div>
+                `;
             } else {
-                html += `<p style="margin-top: 10px; font-size: 0.8rem; color: #7f8c8d;">
-                    ✅ Dados combinados de ${processedPhotos.length} foto(s) processada(s)
-                </p>`;
+                html += `
+                    <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                        <p style="font-size: 0.8rem; color: #27ae60; margin: 0;">
+                            ✅ Dados combinados de ${processedPhotos.length} foto(s) processada(s)
+                        </p>
+                        ${!extractedData.numeroSerie ? '<p style="font-size: 0.8rem; color: #e67e22; margin: 5px 0 0 0;">⚠️ Número de série não encontrado. Fotografe a área ABAIXO do código de barras.</p>' : ''}
+                    </div>
+                `;
             }
             
             html += '</div>';
@@ -1984,11 +2182,21 @@
                 appliedCount++;
             }
             
-            showNotification(`${appliedCount} campos preenchidos automaticamente!`, 'success');
+            if (appliedCount > 0) {
+                showNotification(`✅ ${appliedCount} campos preenchidos automaticamente!`, 'success');
+                addDebugInfo(`Aplicados ${appliedCount} campos ao formulário`);
+            } else {
+                showNotification('❌ Nenhum campo pôde ser preenchido automaticamente', 'warning');
+                addDebugInfo('Nenhum campo aplicado - dados insuficientes');
+            }
+            
             document.getElementById('interventionForm').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // ===== [MANTENHA TODAS AS OUTRAS FUNÇÕES ORIGINAIS DO CÓDIGO ANTERIOR] =====
+        // ===== [MANTENHA TODAS AS OUTRAS FUNÇÕES ORIGINAIS] =====
+        // As funções restantes do código anterior permanecem aqui...
+        // initializeForm, setupEventListeners, loadRegistos, saveRegistos, etc.
+
         // ===== FUNÇÕES BÁSICAS DA APLICAÇÃO =====
         function initializeForm() {
             // Preencher anos para o select
